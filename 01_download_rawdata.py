@@ -89,11 +89,11 @@ if not check_file_done(mass_ranges_fn):
 
 # step 2: do search on NIST, make a list of structures with experimental ir data
 def handle_multiple_results(data):
-    idlist = []
+    idlist = set()
     items = data.split('<a href="/cgi/cbook.cgi?ID=')[1:]
     for i in items:
-        myid = i.split('&amp;')[0]
-        idlist.append(myid)
+        myid = i.split('&amp;')[0].strip()
+        idlist.add(myid)
     return idlist
 
 def handle_single_results(data):
@@ -106,15 +106,46 @@ def read_mass_ranges():
             line = line.strip()
             if line == 'done':
                 break
-            starting,ending = tuple([float(x) for x in line.split()])
+            myrange = tuple([float(x) for x in line.split()])
+            ranges.append(myrange)
     return ranges
 
+def write_idlist(idlist):
+    with open(idlist_fn,'w') as f:
+        for i in idlist:
+            f.write(i+'\n')
+        f.write('done\n')
+
+
 if not check_file_done(idlist_fn):
+    idlist = set()
     ranges = read_mass_ranges()
+    for l,r in ranges:
+        mytype,data = query_list(l,r)
+        if mytype == 'multiple results':
+            newids = handle_multiple_results(data)
+        elif mytype == 'single result':
+            newids = handle_single_results(data)
+        else:
+            raise Exception('Unexpected error on getting id list')
+        print('{} new items for range {}-{}'.format(len(newids),l,r))
+        idlist = idlist | newids
+    write_idlist(idlist)
 
 # step 3: for each structure, make a list of experimental data that NIST have
+def read_idlist():
+    idlist = []
+    with open(idlist_fn) as f:
+        for line in f:
+            line = line.strip()
+            if line == 'done':
+                break
+            idlist.append(line)
+    return idlist
+
 if not check_file_done(intralist_fn):
-    pass
+    idlist = read_idlist()
+    print(idlist)
 
 # step 4: download all the raw data, including structure, experimental spectrum
 # and theoretical spectrum
