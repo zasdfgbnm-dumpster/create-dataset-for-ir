@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import os,sys
+import os,sys,hashlib
 import urllib.request
 
 # this is the script to download raw data from nist
@@ -14,6 +14,7 @@ outputdir = 'outputs/01'
 mass_ranges_fn = outputdir + '/mass_ranges'
 idlist_fn = outputdir + '/idlist'
 intralist_fn = outputdir + '/intralist'
+files_fn = outputdir + '/files'
 
 def test_outputdir():
     return os.path.isdir(outputdir)
@@ -153,13 +154,13 @@ def query_filelist(myid):
     has2d = data.find('2d Mol file') != -1
     if has2d:
         url = 'http://webbook.nist.gov/cgi/cbook.cgi?Str2File={}'.format(myid)
-        filename = outputdir + '/mol_files/{}.mol'.format(myid)
+        filename = 'mol_files/{}.mol'.format(myid)
         file_list.append((url,filename))
     # test 3d SD file
     has3d = data.find('3d SD file') != -1
     if has3d:
         url = 'http://webbook.nist.gov/cgi/cbook.cgi?Str3File={}'.format(myid)
-        filename = outputdir + '/sdf_files/{}.sdf'.format(myid)
+        filename = 'sdf_files/{}.sdf'.format(myid)
         file_list.append((url,filename))
     # get a list of experimental spectrum
     irurl_header = 'http://webbook.nist.gov'
@@ -238,6 +239,79 @@ if not check_file_done(intralist_fn):
             write_filelist(i,f)
             print('progress: {}/{} {}%'.format(count,len(todolist),round(100.0*count/len(todolist),3)))
             count += 1
+        f.write('done\n')
 
-# step 4: download all the raw data, including structure, experimental spectrum
-# and theoretical spectrum
+# step 4: download all the files
+def get_downloaded_list():
+    if not os.path.isfile(files_fn):
+        with open(files_fn,'w') as f:
+            pass
+    downloaded_list = []
+    with open(files_fn) as f:
+        for line in f:
+            filename_md5 = tuple(line.strip().split())
+            downloaded_list.append(filename_md5)
+    print(len(downloaded_list),'already downloaded')
+    # verify md5
+    verified_list = []
+    for fn,expected_md5 in downloaded_list:
+        fullfn = outputdir + '/' + fn
+        if not os.path.isfile(fullfn):
+            print(fn,': file does not exist')
+            continue
+        with open(fullfn,'rb') as f:
+            data = f.read()
+            actuall_md5 = hashlib.md5(data).hexdigest()
+            if expected_md5 == actuall_md5:
+                verified_list.append((fn,expected_md5))
+            else:
+                print(fn,': md5 mismatch\n')
+    print(len(downloaded_list)-len(verified_list),'is broken')
+    # rewrite verified_list back to files_fn
+    with open(files_fn,'w') as f:
+        for fn,md5 in verified_list:
+            f.write('{} {}\n'.format(fn,md5))
+    return verified_list
+
+def get_full_filelist():
+    full_file_list = {}
+    with open(intralist_fn) as f:
+        for line in f:
+            line = line.strip()
+            if line != 'done':
+                url,fn = line.split()
+                if fn in ['start','end']:
+                    continue
+                else:
+                    full_file_list[fn] = url
+    return full_file_list
+
+def prepare_dirs():
+    dirs = [ 'mol_files','sdf_files','digitalized','scanned' ]
+    dirs = [ outputdir+'/'+x for x in dirs ]
+    for d in dirs:
+        if not os.path.isdir(d):
+            os.makedirs(d)
+def writedata(fn,data,files_f):
+    md5 = hashlib.md5(data).hexdigest()
+    with open(outputdir+'/'+fn,'wb') as f:
+        f.write(data)
+    files_f.write('{} {}\n'.format(fn,md5))
+
+fulllist = get_full_filelist()
+downloaded_list = get_downloaded_list()
+# calculate list of files not downloaded yet
+full_filenames = set(fulllist.keys())
+downloaded_filenames = set([x for x,y in downloaded_list])
+remaining = full_filenames - downloaded_filenames
+# download files
+prepare_dirs()
+count = 0
+with open(files_fn,'a') as f:
+    for fn in remaining:
+        url = fulllist[fn]
+        data = urllib.request.urlopen(url).read()#.decode("utf-8")
+        writedata(fn,data,f)
+        print('progress: {}%'.format(round(100.0*count/len(remaining)),3),',',
+              count,'of',len(remaining),',',fn)
+        count += 1
