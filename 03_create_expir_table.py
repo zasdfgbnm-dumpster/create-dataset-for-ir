@@ -27,20 +27,15 @@ def process(i):
     # skip non-standardizable data
     if vec is None:
         return None
-    return Row(mid=mid,index=index,vec=vec,state=state,state_info=state_info)
+    row = Row(mid=mid,index=index,vec=vec,state=state,state_info=state_info)
+    return row
 
 filelist = sc.parallelize(listdir(inputdir),200)
 rows = filelist.map(process).filter(lambda i: i is not None)
 
 # generate table
-schema = StructType([
-    StructField('mid', StringType(), False),
-    StructField('index', IntegerType(), False),
-    StructField('vec', ArrayType(FloatType(), False), False),
-    StructField('state', StringType(), False),
-    StructField('state_info', StringType(), True)
-])
 sqlContext = SQLContext(sc)
-expir = sqlContext.createDataFrame(rows,schema)
+expir = sqlContext.createDataFrame(rows)
+expir.show()
 expir.write.parquet('outputs/03/expir')
 print('done')

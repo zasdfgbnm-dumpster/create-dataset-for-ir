@@ -24,7 +24,7 @@ def standard(xyxy):
     xmin = 670
     xmax = 3702
     xstep = 4
-    yy = array('f')
+    yy = array('d')
     xyxy.sort(reverse=True)
 
     x = xmin
