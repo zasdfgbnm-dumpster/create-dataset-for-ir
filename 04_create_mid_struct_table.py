@@ -1,6 +1,5 @@
-from pyspark import SparkContext, SparkConf
+from pyspark import SparkContext
 from pyspark.sql import SQLContext, Row
-from pyspark.sql.types import *
 
 path = '/home/gaoxiang/create-dataset-for-ir/outputs/02'
 

@@ -3,7 +3,6 @@ from os import listdir
 from tools.jdx2vec import jdx2vec
 from pyspark import SparkContext
 from pyspark.sql import SQLContext, Row
-from pyspark.sql.types import *
 
 sc = SparkContext(appName="03_create_expir_table")
 
