@@ -1,6 +1,5 @@
 #!/usr/bin/env pyspark
 from os import listdir
-from os.path import isfile
 from tools.jdx2vec import jdx2vec
 from pyspark import SparkContext
 from pyspark.sql import SQLContext, Row
