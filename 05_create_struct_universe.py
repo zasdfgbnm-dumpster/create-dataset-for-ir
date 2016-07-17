@@ -9,7 +9,7 @@ sc = SparkContext(appName="03_create_expir_table")
 sqlContext = SQLContext(sc)
 
 # get list of smiles
-smiles_nist = sqlContext.read.parquet(path+'04/mid_structure').select('structure').distinct()
+smiles_nist = sqlContext.read.parquet(path+'/04/mid_structure').select('structure').distinct()
 smiles_gdb = [ sc.textFile(gdb+'/{}.smi'.format(i)) for i in range(1,14) ]
 smiles = sc.union(smiles_gdb+[smiles_nist]).distinct()
 
@@ -24,4 +24,4 @@ print('total number of structures:',rows.count())
 df = sqlContext.createDataFrame(rows)
 df.show()
 print('total number of structures:',rows.count())
-df.write.parquet(path+'05/universe')
+df.write.parquet(path+'/05/universe')
