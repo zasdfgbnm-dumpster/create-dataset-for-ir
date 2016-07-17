@@ -140,7 +140,7 @@ rows = filelist.map(process).filter(lambda i: i is not None)
 
 # generate table
 sqlContext = SQLContext(sc)
-expir = sqlContext.createDataFrame(rows).collect()
+expir = sqlContext.createDataFrame(rows)
 expir.show()
 expir.write.parquet('outputs/03/expir')
 print('done')
