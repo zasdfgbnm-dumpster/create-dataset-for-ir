@@ -3,7 +3,7 @@ from pyspark.sql import SQLContext, Row
 
 path = '/home/gaoxiang/create-dataset-for-ir/outputs/02'
 
-sc = SparkContext(appName="03_create_expir_table")
+sc = SparkContext(appName="04_create_mid_struct_table")
 sqlContext = SQLContext(sc)
 
 # process structures
