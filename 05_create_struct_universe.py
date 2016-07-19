@@ -8,7 +8,7 @@ sc = SparkContext(appName="05_create_struct_universe")
 sqlContext = SQLContext(sc)
 
 # get list of smiles
-smiles_nist = sqlContext.read.parquet(path+'/04/mid_structure').select('structure').distinct().rdd
+smiles_nist = sqlContext.read.parquet(path+'/04/mid_structure').rdd.map(lambda r:r.structure).distinct()
 smiles_gdb = [ sc.textFile(gdb+'/{}.smi'.format(i)) for i in range(1,14) ]
 smiles = sc.union(smiles_gdb+[smiles_nist]).distinct()
 print('number of structures:',smiles.count())
