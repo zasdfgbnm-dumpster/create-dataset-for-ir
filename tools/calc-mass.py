@@ -12,7 +12,7 @@ def mass(smiles):
 smileses = sys.stdin.read().split()
 for s in smileses:
     m = 0
-    try:
+    try:  # for problematic structures, output a 0
         m = mass(s)
     except:
         pass

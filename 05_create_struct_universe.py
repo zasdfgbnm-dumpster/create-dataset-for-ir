@@ -15,7 +15,7 @@ print('number of structures:',smiles.count())
 
 # apply transformations to smiles to generate parquet
 mass = smiles.pipe(path+'/../tools/calc-mass.py')
-rows = smiles.zip(mass).map( lambda s,m: Row(structure=s,mass=m) )
+rows = smiles.zip(mass).map( lambda sm: Row(structure=sm[0],mass=sm[1]) )
 
 df = sqlContext.createDataFrame(rows)
 df.show()
