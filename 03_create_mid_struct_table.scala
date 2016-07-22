@@ -32,8 +32,9 @@ object CreateMIDStructTable {
         val dup = ldup.map(dup_line2row)
 
         // merge duplicates and normal
-        val dup_struct = dup.joinWith(structs,dup("dupof")===structs("mid")).select(dup("mid"),structs("structure")).as[MIDStruct]
-        val total_struct = structs.union(dup_struct)
+        val join = dup.joinWith(structs,dup("dupof")===structs("mid"))
+        val dup_struct = join.map( j => new MIDStruct(j._1.mid,j._2.structure) )
+        val total_struct = dup_struct.union(structs)
 
         // write to file
         total_struct.write.parquet("outputs/03/mid_structure")
