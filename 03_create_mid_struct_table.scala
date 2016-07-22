@@ -1,5 +1,6 @@
 import org.apache.spark.sql._
 import org.apache.spark._
+import sys.process._
 
 object CreateMIDStructTable {
     case class MIDStruct(mid:String,structure:String)
@@ -36,9 +37,13 @@ object CreateMIDStructTable {
         val dup_struct = join.map( j => new MIDStruct(j._1.mid,j._2.structure) )
         val total_struct = dup_struct.union(structs)
 
+        // verify structures
+        def verify_struc(smiles:String):Boolean = ( ( s"./tools/verify.py $smiles" ! ) == 0 )
+        val filtered = total_struct.filter( r => verify_struc(r.structure) )
+
         // write to file
-        total_struct.write.parquet("outputs/03/mid_structure")
-        total_struct.show()
+        filtered.write.parquet("outputs/03/mid_structure")
+        filtered.show()
         println("done")
     }
 }
