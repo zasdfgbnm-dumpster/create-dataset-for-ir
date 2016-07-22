@@ -2,6 +2,7 @@ import scala.math._
 import sparkSession.implicits._
 import org.apache.spark.sql._
 import org.apache.spark._
+import scala.collection.mutable._
 
 def wl2wn(wl:Float):Float = 10000 / wl
 
@@ -13,40 +14,37 @@ def parse_state(state:String):(String,String) = {
 }
 
 // convert x,y data to points at standard x
-def standard(xyxy):
-    xmin = 670
-    xmax = 3702
-    xstep = 4
-    yy = array('d')
-    xyxy.sort(reverse=True)
+//TODO: How to let PriorityQueue order ascending?
+def standard(xyxy:PriorityQueue[(Float,Float)]):Array[Float] = {
+    val xmin = 670 //included
+    val xmax = 3702 //included
+    val xstep = 4
+    val yy = Array[Float]( (xmax-xmin)/xstep + 1 )
 
-    x = xmin
-    low_resolution_count = 0
-    xl,yl = xyxy.pop()
-    while x<=xmax:
-        if len(xyxy) == 0:
-            return None
-        xr,yr = xyxy[-1]
-        if x < xl:
-            return None
-        elif x == xl:
-            yy.append(yl)
+    var x = xmin
+    var low_resolution_count = 0
+    var (xl,yl) = xyxy.dequeue()
+	var idx = 0
+    while(x <= xmax){
+        val (xr,yr) = xyxy.head
+        if(x < xl)
+            return None //TODO: how to replace the return with scala correspondings?
+        else if(x <= xr) {
+            yy(idx) = if(x==xl) yl else yl+(yr-yl)/(xr-xl)*(x-xl)
             x += xstep
+			idx += 1
             low_resolution_count += 1
-        elif x <= xr:
-            yy.append( yl+(yr-yl)/(xr-xl)*(x-xl) )
-            x += xstep
-            low_resolution_count += 1
-        else:
-            xl,yl = xyxy.pop()
-            if low_resolution_count > 0:
+        } else {
+            xl,yl = xyxy.dequeue()
+            if(low_resolution_count > 0)
                 low_resolution_count -= 1
+		}
+	}
 
-    if low_resolution_count > 50:
-        return None
-    else:
-        return yy
-
+    if(low_resolution_count > 50)
+        return None //TODO: how to replace the return with scala correspondings?
+    yy
+}
 
 def jdx2vec(filename):
     # read records and xyy data
