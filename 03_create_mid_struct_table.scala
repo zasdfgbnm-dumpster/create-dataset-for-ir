@@ -2,6 +2,8 @@ import org.apache.spark.sql._
 import org.apache.spark._
 
 object CreateMIDStructTable {
+    case class MIDStruct(mid:String,structure:String)
+    case class DupOf(mid:String,dupof:String)
     def main(args: Array[String]) {
         val session = SparkSession.builder.appName("03_create_mid_struct_table").getOrCreate()
         import session.implicits._
@@ -12,8 +14,6 @@ object CreateMIDStructTable {
         val lunique = session.read.text(path + "/all.unique.smi").as[String]
         val lmix    = session.read.text(path + "/all.mixtures.smi").as[String]
 
-        case class MIDStruct(mid:String,structure:String)
-
         def line2row(line:String):MIDStruct = {
             val l = line.split(raw"\s+")
             MIDStruct(mid=l(1),structure=l(0))
@@ -23,8 +23,6 @@ object CreateMIDStructTable {
 
         // process duplicates
         val ldup = session.read.text(path + "/duplicates.log").as[String]
-
-        case class DupOf(mid:String,dupof:String)
 
         def dup_line2row(line:String):DupOf = {
             val l = line.split(raw"\s+")
