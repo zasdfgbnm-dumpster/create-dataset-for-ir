@@ -1,3 +1,5 @@
 outputs
 test.py
 */__pycache__
+test
+*.jar
