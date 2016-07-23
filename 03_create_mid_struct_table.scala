@@ -5,7 +5,7 @@ import sys.process._
 object CreateMIDStructTable {
     case class MIDStruct(mid:String,structure:String)
     case class DupOf(mid:String,dupof:String)
-    def main(args: Array[String]) {
+    def main(args: Array[String]):Unit {
         val session = SparkSession.builder.appName("03_create_mid_struct_table").getOrCreate()
         import session.implicits._
 
