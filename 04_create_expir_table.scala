@@ -117,9 +117,6 @@ object CreateExpIRTable {
         (standard(xyxy),state1,state2)
     }
 
-    case class ExpIRAndState(mid:String, index:Int, vec:Array[Float], state:String, state_info:String)
-    case class MIDStruct(mid:String,structure:String)
-
     def readExpIRAndState(filename:String):ExpIRAndState = {
         // get mid and index
         val ii = filename.split(raw"\.")(0).split("-")
