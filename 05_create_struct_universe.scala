@@ -26,7 +26,7 @@ object CreateStructUniverse {
         print("number of structures: "); println(smiles.count())
         
         // apply transformations to smiles to generate parquet
-        val smstr = smiles.rdd.pipe(path+'/tools/calc-mass.py').as[String]
+        val smstr = smiles.rdd.pipe(path+"/tools/calc-mass.py").toDS()
         val universe = smstr.map(parse)
         
         universe.show()
