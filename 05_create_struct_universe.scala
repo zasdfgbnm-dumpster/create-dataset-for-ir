@@ -1,22 +1,36 @@
-from pyspark import SparkContext
-from pyspark.sql import SQLContext, Row
+import org.apache.spark.sql._
+import org.apache.spark._
+import sys.process._
+import scala.language.postfixOps
 
-path = '/ufrc/roitberg/qasdfgtyuiop/05_create_struct_universe/outputs'
-gdb = '/ufrc/roitberg/qasdfgtyuiop/gdb13'
+object CreateStructUniverse {
 
-sc = SparkContext(appName="05_create_struct_universe")
-sqlContext = SQLContext(sc)
+    val path = "/ufrc/roitberg/qasdfgtyuiop/05_create_struct_universe"
+    val gdb = "/ufrc/roitberg/qasdfgtyuiop/gdb13"
+    
+    def parse(str:String):StructureUniverse = {
+        val l = str.split(raw"\s+",2)
+        StructureUniverse(smiles=l(0),mass=l(1).toFloat)
+    }
+    
+    def main(args: Array[String]): Unit = {
+        val session = SparkSession.builder.appName("05_create_struct_universe").getOrCreate()
+        import session.implicits._
+        
+        // get list of smiles
+        val mid_structure = session.read.parquet("outputs/03/mid_structure").as[MIDStruct]
+        val smiles_nist = mid_structure.map(_.structure).distinct()
+        val filenames = Range(1,14).map(j=>path+s"/$j.smi")
+        val smiles_gdb = filenames.map(session.read.text(_).as[String]).reduce(_.union(_))
+        val smiles = smiles_nist.union(smiles_gdb).distinct()
+        print("number of structures: "); println(smiles.count())
+        
+        // apply transformations to smiles to generate parquet
+        val smstr = smiles.rdd.pipe(path+'/tools/calc-mass.py').as[String]
+        val universe = smstr.map(parse)
+        
+        universe.show()
+        universe.write.parquet("outputs/05/universe")
+    }
 
-# get list of smiles
-smiles_nist = sqlContext.read.parquet(path+'/04/mid_structure').rdd.map(lambda r:r.structure).distinct()
-smiles_gdb = [ sc.textFile(gdb+'/{}.smi'.format(i)) for i in range(1,14) ]
-smiles = sc.union(smiles_gdb+[smiles_nist]).distinct()
-print('number of structures:',smiles.count())
-
-# apply transformations to smiles to generate parquet
-mass = smiles.pipe(path+'/../tools/calc-mass.py')
-rows = smiles.zip(mass).map( lambda sm: Row(structure=sm[0],mass=sm[1]) )
-
-df = sqlContext.createDataFrame(rows)
-df.show()
-df.write.parquet(path+'/05/universe')
+}

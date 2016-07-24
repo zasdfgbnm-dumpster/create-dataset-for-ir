@@ -14,6 +14,6 @@ for s in smileses:
     m = 0
     try:  # for problematic structures, output a 0
         m = mass(s)
+        print(s,m)
     except:
         pass
-    print(m)

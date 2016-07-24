@@ -3,3 +3,4 @@ test.py
 */__pycache__
 test
 *.jar
+.project
