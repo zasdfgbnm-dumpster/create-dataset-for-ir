@@ -38,7 +38,7 @@ object CreateExpIRTable {
         var x = xmin
         var low_resolution_count = 0
         var (xl,yl) = xyxy.dequeue()
-    	var idx = 0
+    	  var idx = 0
         while(x <= xmax){
             val (xr,yr) = xyxy.head
             if(x < xl)
@@ -46,7 +46,7 @@ object CreateExpIRTable {
             else if(x <= xr) {
                 yy(idx) = if(x==xl) yl else yl+(yr-yl)/(xr-xl)*(x-xl)
                 x += xstep
-    			idx += 1
+    			      idx += 1
                 low_resolution_count += 1
             } else {
                 val xlyl = xyxy.dequeue()
