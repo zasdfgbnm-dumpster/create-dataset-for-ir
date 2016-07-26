@@ -22,7 +22,7 @@ object CreateStructUniverse {
         val smiles_nist = mid_structure.map(_.structure).distinct()
         val filenames = Range(1,14).map(j=>gdb+s"/$j.smi")
         val smiles_gdb = filenames.map(session.read.text(_).as[String]).reduce(_.union(_))
-        val smiles = smiles_nist.union(smiles_gdb).distinct()
+        val smiles = smiles_nist.union(smiles_gdb).repartition(2000).distinct()
         print("number of structures: "); println(smiles.count())
 
         // apply transformations to smiles to generate parquet
