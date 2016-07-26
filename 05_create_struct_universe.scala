@@ -5,10 +5,10 @@ import scala.language.postfixOps
 
 object CreateStructUniverse {
 
-    val path = "/ufrc/roitberg/qasdfgtyuiop/05_create_struct_universe"
-    val gdb = "/ufrc/roitberg/qasdfgtyuiop/gdb13"
+    private val path = "/ufrc/roitberg/qasdfgtyuiop/05_create_struct_universe"
+    private val gdb = "/ufrc/roitberg/qasdfgtyuiop/gdb13"
 
-    def parse(str:String):StructureUniverse = {
+    private def parse(str:String):StructureUniverse = {
         val l = str.split(raw"\s+",2)
         StructureUniverse(smiles=l(0),mass=l(1).toFloat)
     }

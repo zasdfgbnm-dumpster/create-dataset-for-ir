@@ -10,11 +10,11 @@ import scala.language.postfixOps
 
 object CreateExpIRTable {
 
-    class BadJDXException(info:String) extends Throwable {}
+    private class BadJDXException(info:String) extends Throwable {}
 
-    val inputdir = "/home/gaoxiang/create-dataset-for-ir/outputs/01/digitalized/"
+    private val inputdir = "/home/gaoxiang/create-dataset-for-ir/outputs/01/digitalized/"
 
-    def parse_state(state:String):(String,String) = {
+    private def parse_state(state:String):(String,String) = {
         val pattern = raw"(\w*)(.*)".r
         val pattern(s,i) = state
         val ss = s.toLowerCase.trim
@@ -28,7 +28,7 @@ object CreateExpIRTable {
     // Note: xyxy must be ordered ascendingly
     // How to let PriorityQueue order ascending?
     //   val pq = PriorityQueue.empty[(Int, String)](implicitly[Ordering[(Int, String)]].reverse)
-    def standard(xyxy:PriorityQueue[(Float,Float)]):Array[Float] = {
+    private def standard(xyxy:PriorityQueue[(Float,Float)]):Array[Float] = {
         val xmin = 670 //included
         val xmax = 3702 //included
         val xstep = 4
@@ -62,7 +62,7 @@ object CreateExpIRTable {
         yy
     }
 
-    def jdx2vec(filename:String):(Array[Float],String,String) = {
+    private def jdx2vec(filename:String):(Array[Float],String,String) = {
         // read records and xyy data
         val source = Source.fromFile(filename)
         val f1 = source.getLines
@@ -117,7 +117,7 @@ object CreateExpIRTable {
         (standard(xyxy),state1,state2)
     }
 
-    def readExpIRAndState(filename:String):Option[ExpIRAndState] = {
+    private def readExpIRAndState(filename:String):Option[ExpIRAndState] = {
         // get mid and index
         val ii = filename.split(raw"\.")(0).split("-")
         val mid = ii(0)

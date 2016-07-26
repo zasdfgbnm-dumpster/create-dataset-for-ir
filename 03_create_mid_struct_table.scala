@@ -4,7 +4,9 @@ import sys.process._
 import scala.language.postfixOps
 
 object CreateMIDStructTable {
-    case class DupOf(mid:String,dupof:String)
+
+    private case class DupOf(mid:String,dupof:String)
+
     def main(args: Array[String]):Unit = {
         val session = SparkSession.builder.appName("03_create_mid_struct_table").getOrCreate()
         import session.implicits._
