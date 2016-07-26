@@ -41,7 +41,7 @@ object CreateMIDStructTable {
 
         // verify structures
         def verify_struc(smiles:String):Boolean = ( ( s"./tools/verify.py $smiles" ! ) == 0 )
-        val filtered = total_struct.filter( r => verify_struc(r.smiles) )
+        val filtered = total_struct.repartition(200).filter( r => verify_struc(r.smiles) )
 
         // write to file
         filtered.write.parquet("outputs/03/mid_structure")
