@@ -117,17 +117,17 @@ object CreateExpIRTable {
         (standard(xyxy),state1,state2)
     }
 
-    def readExpIRAndState(filename:String):ExpIRAndState = {
+    def readExpIRAndState(filename:String):Option[ExpIRAndState] = {
         // get mid and index
         val ii = filename.split(raw"\.")(0).split("-")
         val mid = ii(0)
         val index = ii(1).toInt
         try {
             val (vec,state,state_info) = jdx2vec(inputdir+filename)
-            new ExpIRAndState(mid=mid,index=index,vec=vec,state=state,state_info=state_info)
+            Some(new ExpIRAndState(mid=mid,index=index,vec=vec,state=state,state_info=state_info))
         } catch {
-            case _ : NoSuchElementException  => new ExpIRAndState(mid="",index=0,vec=Array[Float](),state="",state_info="")
-            case _ : BadJDXException => new ExpIRAndState(mid="",index=0,vec=Array[Float](),state="",state_info="")
+            case _ : NoSuchElementException  => None
+            case _ : BadJDXException => None
         }
     }
 
@@ -137,7 +137,7 @@ object CreateExpIRTable {
 
         // process jdx files
         val filelist = session.createDataset( ("ls "+inputdir !!).split(raw"\n") )
-        val expir_raw = filelist.map(readExpIRAndState)
+        val expir_raw = filelist.map(readExpIRAndState).filter(_.isDefined).map(_.get)
 
         // remove data of bad structures(structures not in mid_structure)
         val mid_structure = session.read.parquet("outputs/03/mid_structure").as[MIDStruct]
