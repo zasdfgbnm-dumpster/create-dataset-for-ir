@@ -17,7 +17,7 @@ object CreateMIDStructTable {
 
         def line2row(line:String):MIDStruct = {
             val l = line.split(raw"\s+")
-            MIDStruct(mid=l(1),structure=l(0))
+            MIDStruct(mid=l(1),smiles=l(0))
         }
 
         val structs = lsalts.union(lunique).union(lmix).map(line2row)
@@ -34,12 +34,12 @@ object CreateMIDStructTable {
 
         // merge duplicates and normal
         val join = dup.joinWith(structs,dup("dupof")===structs("mid"))
-        val dup_struct = join.map( j => new MIDStruct(j._1.mid,j._2.structure) )
+        val dup_struct = join.map( j => new MIDStruct(j._1.mid,j._2.smiles) )
         val total_struct = dup_struct.union(structs)
 
         // verify structures
         def verify_struc(smiles:String):Boolean = ( ( s"./tools/verify.py $smiles" ! ) == 0 )
-        val filtered = total_struct.filter( r => verify_struc(r.structure) )
+        val filtered = total_struct.filter( r => verify_struc(r.smiles) )
 
         // write to file
         filtered.write.parquet("outputs/03/mid_structure")

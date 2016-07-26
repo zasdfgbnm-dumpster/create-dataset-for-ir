@@ -19,7 +19,7 @@ object CreateStructUniverse {
 
         // get list of smiles
         val mid_structure = session.read.parquet("outputs/03/mid_structure").as[MIDStruct]
-        val smiles_nist = mid_structure.map(_.structure).distinct()
+        val smiles_nist = mid_structure.map(_.smiles).distinct()
         val filenames = Range(1,14).map(j=>gdb+s"/$j.smi")
         val smiles_gdb = filenames.map(session.read.text(_).as[String]).reduce(_.union(_))
         val smiles = smiles_nist.union(smiles_gdb).repartition(2000).distinct()
