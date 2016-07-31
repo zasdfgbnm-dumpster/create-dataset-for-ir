@@ -10,6 +10,12 @@ import scala.language.postfixOps
 
 object CreateExpIRTable {
 
+    // information of x
+    val xmin = 670 //included
+    val xmax = 3702 //included
+    val xstep = 4
+    val vecsize = (xmax-xmin)/xstep + 1
+
     private class BadJDXException(info:String) extends Throwable {}
 
     private val inputdir = "/home/gaoxiang/create-dataset-for-ir/outputs/01/digitalized/"
@@ -29,10 +35,6 @@ object CreateExpIRTable {
     // How to let PriorityQueue order ascending?
     //   val pq = PriorityQueue.empty[(Int, String)](implicitly[Ordering[(Int, String)]].reverse)
     private def standard(xyxy:PriorityQueue[(Float,Float)]):Array[Float] = {
-        val xmin = 670 //included
-        val xmax = 3702 //included
-        val xstep = 4
-        val vecsize = (xmax-xmin)/xstep + 1
         val yy = new Array[Float](vecsize)
 
         var x = xmin
