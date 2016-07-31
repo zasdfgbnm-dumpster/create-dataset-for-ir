@@ -4,3 +4,4 @@ test.py
 test
 *.jar
 .project
+.ipynb_checkpoints
