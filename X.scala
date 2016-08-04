@@ -5,5 +5,6 @@ package irms {
         val xmax = 3702 //included
         val xstep = 4
         val vecsize = (xmax-xmin)/xstep + 1
+        val xs = Range(X.xmin,X.xmax+X.xstep,X.xstep).map(1.0f*_) // x values
     }
 }
