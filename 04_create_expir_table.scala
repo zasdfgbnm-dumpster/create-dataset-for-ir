@@ -108,7 +108,9 @@ package irms {
                         _x = 10000/_x
                     var _y = yy(j)*yfactor
                     if( yunit == "ABSORBANCE" )
-                        _y = pow(10,-_y).toFloat
+                        _y = 1 - pow(10,-_y).toFloat
+                    else
+                        _y = 1 - _y
                     xyxy.enqueue((_x,_y))
                 }
             }
