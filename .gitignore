@@ -5,3 +5,4 @@ test
 *.jar
 .project
 .ipynb_checkpoints
+.tup
