@@ -30,8 +30,8 @@ package irms {
         // Note: xyxy must be ordered ascendingly
         // How to let PriorityQueue order ascending?
         //   val pq = PriorityQueue.empty[(Int, String)](implicitly[Ordering[(Int, String)]].reverse)
-        private def standard(xyxy:PriorityQueue[(Float,Float)]):Array[Float] = {
-            val yy = new Array[Float](X.vecsize)
+        private def standard(xyxy:PriorityQueue[(Double,Double)]):Array[Double] = {
+            val yy = new Array[Double](X.vecsize)
 
             var x = X.xmin
             var low_resolution_count = 0
@@ -60,12 +60,12 @@ package irms {
             yy
         }
 
-        private def jdx2vec(filename:String):(Array[Float],String,String) = {
+        private def jdx2vec(filename:String):(Array[Double],String,String) = {
             // read records and xyy data
             val source = Source.fromFile(filename)
             val f1 = source.getLines
             val record = mutable.Map[String,String]()
-            val xyy = ArrayBuffer[(Float,Array[Float])]()
+            val xyy = ArrayBuffer[(Double,Array[Double])]()
             var inxyy = false
             record("STATE") = ""
             for( j <- f1 ) {
@@ -83,7 +83,7 @@ package irms {
                     // In some files there are strings like "12345-67890",
                     // which is 12345 and -67890
                     val jfix = j.replaceAll("-"," -")
-                    val numbers = jfix.split(raw"\s+").map(_.toFloat)
+                    val numbers = jfix.split(raw"\s+").map(_.toDouble)
                     val x = numbers(0)
                     val y = numbers.splitAt(1)._2
                     xyy += ( (x,y) )
@@ -93,12 +93,12 @@ package irms {
             // further parse state
             val (state1,state2) = parse_state(record("STATE"))
             // generate [(x,y)..] data, x in 1/CM, y in transmittance
-            val xyxy = PriorityQueue.empty[(Float, Float)](implicitly[Ordering[(Float, Float)]].reverse)
-            val firstx = record("FIRSTX").toFloat
-            val lastx = record("LASTX").toFloat
-            val npoints = record("NPOINTS").toFloat
+            val xyxy = PriorityQueue.empty[(Double, Double)](implicitly[Ordering[(Double, Double)]].reverse)
+            val firstx = record("FIRSTX").toDouble
+            val lastx = record("LASTX").toDouble
+            val npoints = record("NPOINTS").toDouble
             val deltax = (lastx-firstx)/(npoints-1)
-            val yfactor = record("YFACTOR").toFloat
+            val yfactor = record("YFACTOR").toDouble
             val xunit = record("XUNITS")
             val yunit = record("YUNITS")
             for( (x,yy) <- xyy ) {
@@ -108,7 +108,7 @@ package irms {
                         _x = 10000/_x
                     var _y = yy(j)*yfactor
                     if( yunit == "ABSORBANCE" )
-                        _y = 1 - pow(10,-_y).toFloat
+                        _y = 1 - pow(10,-_y).toDouble
                     else
                         _y = 1 - _y
                     xyxy.enqueue((_x,_y))

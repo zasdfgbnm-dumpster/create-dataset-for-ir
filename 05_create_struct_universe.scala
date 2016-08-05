@@ -11,7 +11,7 @@ package irms {
 
         private def parse(str:String):StructureUniverse = {
             val l = str.split(raw"\s+",2)
-            StructureUniverse(smiles=l(0),mass=l(1).toFloat)
+            StructureUniverse(smiles=l(0),mass=l(1).toDouble)
         }
 
         def main(args: Array[String]): Unit = {

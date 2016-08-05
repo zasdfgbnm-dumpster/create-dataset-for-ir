@@ -11,7 +11,7 @@ package irms {
 
         private val sdf = "outputs/01/sdf_files"
 
-        private case class fn_m_freq(mid:String,method:String,freqsformat:String,freqs:Array[(Float,Float)])
+        private case class fn_m_freq(mid:String,method:String,freqsformat:String,freqs:Array[(Double,Double)])
 
         private def read(filename:String):Option[fn_m_freq] = {
             val content = Source.fromFile(sdf+s"/$filename").mkString
@@ -25,7 +25,7 @@ package irms {
                 val irfreqstr = fieldcontents(idxirfreq+1).trim
                 def line2tuple(str:String) = {
                     val a = str.trim.split(raw"\s+",2)
-                    (a(0).toFloat,a(1).toFloat)
+                    (a(0).toDouble,a(1).toDouble)
                 }
                 val irfreqlines = irfreqstr.split(raw"\n+")
                 Some(new fn_m_freq(filename.split("\\.")(0),method,irfreqlines(0).trim,irfreqlines.tail.map(line2tuple)))
