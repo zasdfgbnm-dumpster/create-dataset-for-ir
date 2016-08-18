@@ -146,7 +146,7 @@ package irms {
 
             // output
             expir.show()
-            expir.write.parquet("outputs/04/expir")
+            expir.write.parquet("outputs/tables/expir")
             val show_states = expir.groupBy(expir("state")).count().sort($"count".desc)
             show_states.show()
             println("done")

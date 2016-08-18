@@ -31,7 +31,7 @@ package irms {
             val universe = smstr.map(parse)
 
             universe.show()
-            universe.write.parquet("outputs/05/universe")
+            universe.write.parquet("outputs/tables/universe")
         }
 
     }

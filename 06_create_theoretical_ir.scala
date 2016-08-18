@@ -50,7 +50,7 @@ package irms {
             // outputs
             table.show()
             table.groupBy(table("method")).count().sort($"count".desc).show()
-            table.write.parquet("outputs/06/thir")
+            table.write.parquet("outputs/tables/thir")
         }
     }
 }
