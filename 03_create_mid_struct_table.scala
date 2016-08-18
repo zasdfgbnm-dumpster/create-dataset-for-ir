@@ -14,16 +14,16 @@ package irms {
 
             // process structures
             val path = "outputs/02"
-            val lsalts  = session.read.text(path + "/all.salts.smi").as[String]
             val lunique = session.read.text(path + "/all.unique.smi").as[String]
-            val lmix    = session.read.text(path + "/all.mixtures.smi").as[String]
+            //val lsalts  = session.read.text(path + "/all.salts.smi").as[String]
+            //val lmix    = session.read.text(path + "/all.mixtures.smi").as[String]
 
             def line2row(line:String):MIDStruct = {
                 val l = line.split(raw"\s+")
                 MIDStruct(mid=l(1),smiles=l(0))
             }
 
-            val structs = lsalts.union(lunique).union(lmix).map(line2row)
+            val structs = lunique/*.union(lsalts).union(lmix)*/.map(line2row)
 
             // process duplicates
             val ldup = session.read.text(path + "/duplicates.log").as[String]
@@ -45,7 +45,7 @@ package irms {
             val filtered = total_struct.repartition(200).filter( r => verify_struc(r.smiles) )
 
             // write to file
-            filtered.write.parquet("outputs/03/mid_structure")
+            filtered.write.parquet("outputs/tables/mid_structure")
             filtered.show()
             println("done")
         }
