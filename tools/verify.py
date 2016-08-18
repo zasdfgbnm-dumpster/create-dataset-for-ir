@@ -1,8 +1,17 @@
 #!/usr/bin/env python
 from rdkit.Chem import *
-from sys import *
+import sys
 
-if MolFromSmiles(argv[1]) is None:
-    exit(1)
-else:
-    exit(0)
+def verify(smiles):
+    m = MolFromSmiles(smiles)
+    m = AddHs(m)
+    return m
+
+smileses = sys.stdin.read().split()
+for s in smileses:
+    m = 0
+    try:  # for problematic structures, output a 0
+        m = verify(s)
+        print(s)
+    except:
+        pass

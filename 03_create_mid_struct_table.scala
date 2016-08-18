@@ -1,7 +1,5 @@
 import org.apache.spark.sql._
 import org.apache.spark._
-import sys.process._
-import scala.language.postfixOps
 
 package irms {
     object CreateMIDStructTable {
@@ -22,8 +20,13 @@ package irms {
                 val l = line.split(raw"\s+")
                 MIDStruct(mid=l(1),smiles=l(0))
             }
+            val structs_not_validated = lunique/*.union(lsalts).union(lmix)*/.map(line2row)
 
-            val structs = lunique/*.union(lsalts).union(lmix)*/.map(line2row)
+            // validate structures
+            val smiles = structs_not_validated.repartition(32).map(j=>j.smiles).rdd.pipe("tools/verify.py").toDS
+            val structs = structs_not_validated.joinWith(smiles,structs_not_validated("smiles")===smiles("value")).map(_._1)
+            println("number of structures not validated: ",structs_not_validated.count())
+            println("number of structures validate: ",structs.count())
 
             // process duplicates
             val ldup = session.read.text(path + "/duplicates.log").as[String]
@@ -40,13 +43,9 @@ package irms {
             val dup_struct = join.map( j => new MIDStruct(j._1.mid,j._2.smiles) )
             val total_struct = dup_struct.union(structs)
 
-            // verify structures
-            def verify_struc(smiles:String):Boolean = ( ( s"./tools/verify.py $smiles" ! ) == 0 )
-            val filtered = total_struct.repartition(200).filter( r => verify_struc(r.smiles) )
-
             // write to file
-            filtered.write.parquet("outputs/tables/mid_structure")
-            filtered.show()
+            total_struct.write.parquet("outputs/tables/mid_structure")
+            total_struct.show()
             println("done")
         }
     }
