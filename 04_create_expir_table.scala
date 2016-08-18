@@ -140,7 +140,7 @@ package irms {
             val expir_raw = filelist.map(readExpIRAndState).filter(_.isDefined).map(_.get)
 
             // remove data of bad structures(structures not in mid_structure)
-            val mid_structure = session.read.parquet("outputs/03/mid_structure").as[MIDStruct]
+            val mid_structure = session.read.parquet("outputs/tables/mid_structure").as[MIDStruct]
             val join = expir_raw.joinWith(mid_structure,expir_raw("mid")===mid_structure("mid"))
             val expir = join.map(_._1)
 
