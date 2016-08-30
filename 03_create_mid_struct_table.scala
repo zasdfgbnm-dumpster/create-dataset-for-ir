@@ -11,10 +11,9 @@ package irms {
             import session.implicits._
 
             // process structures
-            val path = "outputs/02"
-            val lunique = session.read.text(path + "/all.unique.smi").as[String]
-            //val lsalts  = session.read.text(path + "/all.salts.smi").as[String]
-            //val lmix    = session.read.text(path + "/all.mixtures.smi").as[String]
+            val lunique = session.read.text(Environment.raw + "/all.unique.smi").as[String]
+            //val lsalts  = session.read.text(Environment.raw + "/all.salts.smi").as[String]
+            //val lmix    = session.read.text(Environment.raw + "/all.mixtures.smi").as[String]
 
             def line2row(line:String):MIDStruct = {
                 val l = line.split(raw"\s+")
@@ -23,13 +22,14 @@ package irms {
             val structs_not_validated = lunique/*.union(lsalts).union(lmix)*/.map(line2row)
 
             // validate structures
-            val smiles = structs_not_validated.repartition(32).map(j=>j.smiles).rdd.pipe("tools/verify.py").toDS
+            val smiles = structs_not_validated.repartition(32).map(j=>j.smiles).rdd
+                         .pipe(Environment.pycmd + " " + Environment.bin + "/verify.py").toDS
             val structs = structs_not_validated.joinWith(smiles,structs_not_validated("smiles")===smiles("value")).map(_._1)
             println("number of structures not validated: ",structs_not_validated.count())
             println("number of structures validate: ",structs.count())
 
             // process duplicates
-            val ldup = session.read.text(path + "/duplicates.log").as[String]
+            val ldup = session.read.text(Environment.raw + "/duplicates.log").as[String]
 
             def dup_line2row(line:String):DupOf = {
                 val l = line.split(raw"\s+")
@@ -44,7 +44,7 @@ package irms {
             val total_struct = dup_struct.union(structs)
 
             // write to file
-            total_struct.write.parquet("outputs/tables/mid_structure")
+            total_struct.write.parquet(Environment.tables + "/mid_structure")
             total_struct.show()
             println("done")
         }

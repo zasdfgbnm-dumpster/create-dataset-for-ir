@@ -9,7 +9,7 @@ import org.apache.spark._
 package irms {
     object CreateTheoreticalIR {
 
-        private val sdf = "outputs/01/sdf_files"
+        private val sdf = Environment.raw + "/sdf_files"
 
         private case class fn_m_freq(mid:String,method:String,freqsformat:String,freqs:Array[(Double,Double)])
 
@@ -43,14 +43,14 @@ package irms {
             data.groupBy(data("freqsformat")).count().sort($"count".desc).show()
 
             // replace mid with structure
-            val mid_structure = session.read.parquet("outputs/tables/mid_structure").as[MIDStruct]
+            val mid_structure = session.read.parquet(Environment.tables + "/mid_structure").as[MIDStruct]
             val join = data.joinWith(mid_structure,data("mid")===mid_structure("mid"))
             val table = join.map(j => new TheoreticalIR(smiles=j._2.smiles,method=j._1.method,freqs=j._1.freqs))
 
             // outputs
             table.show()
             table.groupBy(table("method")).count().sort($"count".desc).show()
-            table.write.parquet("outputs/tables/thir")
+            table.write.parquet(Environment.tables + "/thir")
         }
     }
 }

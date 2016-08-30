@@ -1,4 +1,3 @@
-#!/ufrc/roitberg/qasdfgtyuiop/anaconda3/envs/my-rdkit-env/bin/python
 from rdkit.Chem import *
 from rdkit.Chem.Descriptors import *
 import sys,os
@@ -26,8 +25,8 @@ class fg_matcher:
         m = Chem.MolFromSmiles(smiles)
         return [m.HasSubstructMatch(patt) for patt, fgname in self.fgs]
 
-hpgpath = '/ufrc/roitberg/qasdfgtyuiop/bin'
-pcpath = '/home/gaoxiang/irms/bin'
+hpgpath = '/ufrc/roitberg/qasdfgtyuiop/data'
+pcpath = '/home/gaoxiang/irms/data'
 ishpg = os.path.exists(hpgpath)
 path = hpgpath if ishpg else pcpath
 matcher = fg_matcher(path+'/FunctionalGroups.txt')

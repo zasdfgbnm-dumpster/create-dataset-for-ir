@@ -1,1 +1,0 @@
-: foreach *_*.scala | common.scala |> scalac -classpath "/opt/apache-spark/assembly/target/scala-2.11/jars/*" %f common.scala -d %o |> %B.jar

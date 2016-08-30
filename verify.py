@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 from rdkit.Chem import *
 import sys
 
@@ -10,7 +9,7 @@ def verify(smiles):
 smileses = sys.stdin.read().split()
 for s in smileses:
     m = 0
-    try:  # for problematic structures, output a 0
+    try:
         m = verify(s)
         print(s)
     except:
