@@ -6,6 +6,8 @@ mainClass in Compile := Some("irms.Main")
 
 scalaVersion := "2.11.8"
 
+scalacOptions ++= Seq("-Xlint","-feature")
+
 libraryDependencies += "org.apache.spark" %% "spark-core" % "2.0.0"
 
 libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.0.0"
