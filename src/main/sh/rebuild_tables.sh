@@ -4,7 +4,7 @@ set -e
 
 # copy files
 for i in *([0-9])_*.scala;do
-	scalac $i common.scala -d ~/MEGA/bin/$(basename $i .scala).jar
+	scalac -language:experimental.macros $i common.scala -d ~/MEGA/bin/$(basename $i .scala).jar
 done
 cp *.py ~/MEGA/bin
 cp FunctionalGroups.txt ~/MEGA/data

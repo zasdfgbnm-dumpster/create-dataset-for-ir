@@ -1,20 +1,22 @@
 import scala.math._
-import org.apache.spark.sql._
-import org.apache.spark._
 import scala.collection.mutable
 import scala.collection.mutable.PriorityQueue
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 import sys.process._
 import scala.language.postfixOps
+import org.apache.spark.sql._
 
 package irms {
 
-    object CreateExpIRTable {
+    import Env.spark.implicits._
+
+    case class ExpIRAndState(mid:String, index:Int, vec:Array[Double], state:String, state_info:String)
+    object ExpIRAndState extends Table[ExpIRAndState] {
 
         private class BadJDXException(info:String) extends Throwable {}
 
-        private val inputdir = Environment.raw + "/digitalized/"
+        private val inputdir = Env.raw + "/digitalized/"
 
         private def parse_state(state:String):(String,String) = {
             val pattern = raw"(\w*)(.*)".r
@@ -31,19 +33,19 @@ package irms {
         // How to let PriorityQueue order ascending?
         //   val pq = PriorityQueue.empty[(Int, String)](implicitly[Ordering[(Int, String)]].reverse)
         private def standard(xyxy:PriorityQueue[(Double,Double)]):Array[Double] = {
-            val yy = new Array[Double](X.vecsize)
+            val yy = new Array[Double](Params.X.vecsize)
 
-            var x = X.xmin
+            var x = Params.X.xmin
             var low_resolution_count = 0
             var (xl,yl) = xyxy.dequeue()
             var idx = 0
-            while(x <= X.xmax){
+            while(x <= Params.X.xmax){
                 val (xr,yr) = xyxy.head
                 if(x < xl)
                     throw new BadJDXException("out of range")
                 else if(x <= xr) {
                     yy(idx) = if(x==xl) yl else yl+(yr-yl)/(xr-xl)*(x-xl)
-                    x += X.xstep
+                    x += Params.X.xstep
                     idx += 1
                     low_resolution_count += 1
                 } else {
@@ -131,25 +133,23 @@ package irms {
             }
         }
 
-        def main(args: Array[String]): Unit = {
-            val session = SparkSession.builder.appName("04_create_expir_table").getOrCreate()
-            import session.implicits._
+        def create(path:String):Unit = {
+            import Env.spark.implicits._
 
             // process jdx files
-            val filelist = session.createDataset( ("ls "+inputdir !!).split(raw"\n") )
+            val filelist = Env.spark.createDataset( ("ls "+inputdir !!).split(raw"\n") )
             val expir_raw = filelist.map(readExpIRAndState).filter(_.isDefined).map(_.get)
 
             // remove data of bad structures(structures not in mid_structure)
-            val mid_structure = session.read.parquet(Environment.tables + "/mid_structure").as[MIDStruct]
+            val mid_structure = MIDStruct.getOrCreate
             val join = expir_raw.joinWith(mid_structure,expir_raw("mid")===mid_structure("mid"))
             val expir = join.map(_._1)
 
             // output
             expir.show()
-            expir.write.parquet(Environment.tables + "/expir")
+            expir.write.parquet(path)
             val show_states = expir.groupBy(expir("state")).count().sort($"count".desc)
             show_states.show()
-            println("done")
         }
 
     }

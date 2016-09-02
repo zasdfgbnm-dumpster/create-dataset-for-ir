@@ -1,19 +1,21 @@
 import org.apache.spark.sql._
-import org.apache.spark._
 
 package irms {
-    object CreateMIDStructTable {
+
+    import Env.spark.implicits._
+
+    case class MIDStruct(mid:String,smiles:String)
+    object MIDStruct extends Table[MIDStruct] {
 
         private case class DupOf(mid:String,dupof:String)
 
-        def main(args: Array[String]):Unit = {
-            val session = SparkSession.builder.appName("03_create_mid_struct_table").getOrCreate()
-            import session.implicits._
+        def create(path:String):Unit = {
+            import Env.spark.implicits._
 
             // process structures
-            val lunique = session.read.text(Environment.raw + "/all.unique.smi").as[String]
-            //val lsalts  = session.read.text(Environment.raw + "/all.salts.smi").as[String]
-            //val lmix    = session.read.text(Environment.raw + "/all.mixtures.smi").as[String]
+            val lunique = Env.spark.read.text(Env.raw + "/all.unique.smi").as[String]
+            //val lsalts  = Env.spark.read.text(Env.raw + "/all.salts.smi").as[String]
+            //val lmix    = Env.spark.read.text(Env.raw + "/all.mixtures.smi").as[String]
 
             def line2row(line:String):MIDStruct = {
                 val l = line.split(raw"\s+")
@@ -23,13 +25,12 @@ package irms {
 
             // validate structures
             val smiles = structs_not_validated.repartition(32).map(j=>j.smiles).rdd
-                         .pipe(Environment.pycmd + " " + Environment.bin + "/verify.py").toDS
+                         .pipe(Env.pycmd + " " + Env.bin + "/verify.py").toDS
             val structs = structs_not_validated.joinWith(smiles,structs_not_validated("smiles")===smiles("value")).map(_._1)
-            println("number of structures not validated: ",structs_not_validated.count())
-            println("number of structures validate: ",structs.count())
+            println("number of bad structures removed: ",structs_not_validated.count()-structs.count())
 
             // process duplicates
-            val ldup = session.read.text(Environment.raw + "/duplicates.log").as[String]
+            val ldup = Env.spark.read.text(Env.raw + "/duplicates.log").as[String]
 
             def dup_line2row(line:String):DupOf = {
                 val l = line.split(raw"\s+")
@@ -44,9 +45,8 @@ package irms {
             val total_struct = dup_struct.union(structs)
 
             // write to file
-            total_struct.write.parquet(Environment.tables + "/mid_structure")
+            total_struct.write.parquet(path)
             total_struct.show()
-            println("done")
         }
     }
 }

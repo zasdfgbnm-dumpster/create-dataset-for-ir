@@ -1,15 +1,17 @@
 import sys.process._
-import scala.language.postfixOps
 import scala.io.Source
 import scala.collection.mutable
 import scala.util.matching.Regex
 import org.apache.spark.sql._
-import org.apache.spark._
 
 package irms {
-    object CreateTheoreticalIR {
 
-        private val sdf = Environment.raw + "/sdf_files"
+    import Env.spark.implicits._
+
+    case class TheoreticalIR(smiles:String, method:String, freqs:Array[(Double,Double)])
+    object TheoreticalIR extends Table[TheoreticalIR] {
+
+        private val sdf = Env.raw + "/sdf_files"
 
         private case class fn_m_freq(mid:String,method:String,freqsformat:String,freqs:Array[(Double,Double)])
 
@@ -33,24 +35,23 @@ package irms {
                 None
         }
 
-        def main(args: Array[String]): Unit = {
-            val session = SparkSession.builder.appName("04_create_expir_table").getOrCreate()
-            import session.implicits._
+        def create(path:String):Unit = {
+            import Env.spark.implicits._
 
             // read sdf files
-            val files = session.createDataset( (s"ls $sdf" !!).split(raw"\s+") )
+            val files = Env.spark.createDataset( (s"ls $sdf" !!).split(raw"\s+") )
             val data = files.map(read).filter(_.isDefined).map(_.get)
             data.groupBy(data("freqsformat")).count().sort($"count".desc).show()
 
             // replace mid with structure
-            val mid_structure = session.read.parquet(Environment.tables + "/mid_structure").as[MIDStruct]
+            val mid_structure = MIDStruct.getOrCreate
             val join = data.joinWith(mid_structure,data("mid")===mid_structure("mid"))
             val table = join.map(j => new TheoreticalIR(smiles=j._2.smiles,method=j._1.method,freqs=j._1.freqs))
 
             // outputs
             table.show()
             table.groupBy(table("method")).count().sort($"count".desc).show()
-            table.write.parquet(Environment.tables + "/thir")
+            table.write.parquet(path)
         }
     }
 }
