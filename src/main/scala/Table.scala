@@ -10,7 +10,7 @@ package irms {
 
 		var ds:Option[Dataset[T]] = None
 
-		def getTableName:String = {
+		val getTableName:String = {
 			val raw = this.getClass.getName
 			raw.split("\\$")(0).split("\\.").last
 		}
