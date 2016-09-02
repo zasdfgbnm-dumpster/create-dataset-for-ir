@@ -26,7 +26,7 @@ class fg_matcher:
         return [m.HasSubstructMatch(patt) for patt, fgname in self.fgs]
 
 hpgpath = '/ufrc/roitberg/qasdfgtyuiop/data'
-pcpath = '/home/gaoxiang/irms/data'
+pcpath = '/home/gaoxiang/MEGA/data'
 ishpg = os.path.exists(hpgpath)
 path = hpgpath if ishpg else pcpath
 matcher = fg_matcher(path+'/FunctionalGroups.txt')
