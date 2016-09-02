@@ -1,8 +1,8 @@
-import sys.process._
 import scala.io.Source
 import scala.collection.mutable
 import scala.util.matching.Regex
 import org.apache.spark.sql._
+import sys.process._
 import scala.language.postfixOps
 
 package irms {
