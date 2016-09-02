@@ -1,20 +1,41 @@
-//import sbt.NameFilter
 import sbt.complete._
-//import sbt.complete.Parser._
 import sbt.complete.DefaultParsers._
-//import sbt.complete.DefaultParsers._
 
-name := "CreateDataset"
-version := "0.0.1-SNAPSHOT"
-mainClass in Compile := Some("irms.Main")
 
-scalaVersion := "2.11.8"
-scalacOptions ++= Seq("-Xlint","-feature")
+val scalaversion = "2.11.8"
+val paradiseVersion = "2.1.0"
 
-libraryDependencies += "org.apache.spark" %% "spark-core" % "2.0.0"
-libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.0.0"
+val commonSettings = Defaults.defaultSettings ++ Seq (
+	scalaVersion := scalaversion,
+	scalacOptions ++= Seq("-Xlint","-feature"),
+	crossScalaVersions := Seq(scalaversion),
+	resolvers += Resolver.sonatypeRepo("snapshots"),
+	resolvers += Resolver.sonatypeRepo("releases"),
+	addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full)
+)
 
-cleanFiles <+= baseDirectory { base => base / "spark-warehouse" }
+//projects
+lazy val macro = (project in file("macro")).
+	settings(commonSettings: _*).
+	settings (
+		libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _),
+		libraryDependencies ++= ( if(scalaVersion.value.startsWith("2.10")) List("org.scalamacros" %% "quasiquotes" % paradiseVersion) else Nil )
+	)
+lazy val core = (project in file("core")).
+	dependsOn(macro).
+	settings(commonSettings: _*).
+	settings (
+		libraryDependencies += "org.apache.spark" %% "spark-core" % "2.0.0",
+		libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.0.0"
+	)
+lazy val root = (project in file(".")).
+	settings(
+		name := "CreateDataset",
+		version := "0.0.1-SNAPSHOT",
+		mainClass in Compile := Some("irms.Main"),
+		cleanFiles <+= baseDirectory { base => base / "spark-warehouse" }
+	)
+	.aggregate(macro, core)
 
 //paths
 //TODO: dedup path below
@@ -28,7 +49,6 @@ val parser:Parser[Seq[String]] = token( (Space~>literal("ExpIRAndState")) | (Spa
 val rm = inputKey[Unit]("remove a table")
 rm := {
 	val args = parser.parsed
-	println("rm: "+args)
 	if(args.isEmpty)
 		"find "+tables+" -maxdepth 1 -mindepth 1 -exec rm -rf {} ;" !;
 	else

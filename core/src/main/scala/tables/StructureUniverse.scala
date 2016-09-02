@@ -4,7 +4,8 @@ package irms {
 
     import Env.spark.implicits._
 
-    case class StructureUniverse(smiles:String,mass:Double)
+    @fgargs case class FunctionalGroups()
+    case class StructureUniverse(smiles:String,mass:Double, fg:FunctionalGroups)
     object StructureUniverse extends Table[StructureUniverse] {
 
         private val gdb = Env.raw + "/gdb13"
