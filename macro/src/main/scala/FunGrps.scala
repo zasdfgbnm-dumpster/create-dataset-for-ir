@@ -17,7 +17,7 @@ package irms {
 			selected.map(_(1).trim)
 		}
 
-		def impl(c: Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
+		def clsMacro(c: Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
 			import c.universe._
 			val arglist = FunGrps.func_grps.map(TermName(_)).map(j=>q"$j:Boolean")
 			val result = annottees.map(_.tree).toList match {
@@ -26,9 +26,25 @@ package irms {
 			c.Expr[Any](result)
 		}
 
+		def expandMacro(c: Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
+			import c.universe._
+			val len = FunGrps.func_grps.length
+			val arglist = Range(0,len).map(j=>q"a($j)")
+			val result = annottees.map(_.tree).toList match {
+				case q"def apply(a:Array[Boolean]):$tpe = $obj" :: Nil =>
+					 q"def apply(a:Array[Boolean]):$tpe = $obj(..$arglist)"
+			}
+			c.Expr[Any](result)
+		}
+
 	}
 
 	class fgargs extends StaticAnnotation {
-		def macroTransform(annottees: Any*) = macro FunGrps.impl
+		def macroTransform(annottees: Any*):Any = macro FunGrps.clsMacro
 	}
+
+	class fgexpand extends StaticAnnotation {
+		def macroTransform(annottees: Any*):Any = macro FunGrps.expandMacro
+	}
+
 }

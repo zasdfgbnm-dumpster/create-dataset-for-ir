@@ -5,14 +5,19 @@ package irms {
     import Env.spark.implicits._
 
     @fgargs case class FunctionalGroups()
+    object FunctionalGroupsCvt {
+        @fgexpand
+        def apply(a:Array[Boolean]):FunctionalGroups = FunctionalGroups
+    }
     case class StructureUniverse(smiles:String,mass:Double, fg:FunctionalGroups)
     object StructureUniverse extends Table[StructureUniverse] {
 
         private val gdb = Env.raw + "/gdb13"
 
         private def parse(str:String):StructureUniverse = {
-            val l = str.split(raw"\s+",2+FunGrps.func_grps.length)
-            StructureUniverse(smiles=l(0),mass=l(1).toDouble)
+            val (l,fgs) = str.split(raw"\s+",2+FunGrps.func_grps.length).splitAt(2)
+            val fgsboolean = fgs.map(_.toBoolean)
+            StructureUniverse(smiles=l(0),mass=l(1).toDouble,fg=FunctionalGroupsCvt(fgsboolean))
         }
 
         def create(path:String):Unit = {
