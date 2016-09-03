@@ -25,6 +25,7 @@ lazy val core = (project in file("core")).
 	dependsOn(macro).
 	settings(commonSettings: _*).
 	settings (
+		mainClass in Compile := Some("irms.Main"),
 		libraryDependencies += "org.apache.spark" %% "spark-core" % "2.0.0",
 		libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.0.0"
 	)
