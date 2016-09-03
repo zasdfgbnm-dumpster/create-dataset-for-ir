@@ -7,7 +7,7 @@ val paradiseVersion = "2.1.0"
 
 val commonSettings = Defaults.defaultSettings ++ Seq (
 	scalaVersion := scalaversion,
-	scalacOptions ++= Seq("-Xlint","-feature"),
+	scalacOptions ++= Seq("-Xlint","-feature","-deprecation"),
 	crossScalaVersions := Seq(scalaversion),
 	resolvers += Resolver.sonatypeRepo("snapshots"),
 	resolvers += Resolver.sonatypeRepo("releases"),
