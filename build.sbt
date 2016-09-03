@@ -72,6 +72,9 @@ rm := {
 // 	(run in Compile).evaluated
 // }
 
-// lazy val hpgator = taskKey[Unit]("copy files to hpgator")
-// hpgator := { "./src/main/sh/hpgator.sh" !; }
-// hpgator <<= hpgator.dependsOn(run)
+lazy val hpgator = taskKey[Unit]("copy files to hpgator")
+hpgator := {
+	val jar = (Keys.`package` in Compile in core).value.getAbsolutePath()
+	val build_tables = (run in Compile in core).toTask(" MIDStruct ExpIRAndState TheoreticalIR").value
+	"./core/src/main/sh/hpgator.sh " + jar !;
+}
