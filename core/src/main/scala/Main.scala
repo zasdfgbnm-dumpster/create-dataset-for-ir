@@ -4,10 +4,10 @@ package irms {
 			val arglist = (if(args.isEmpty) Array(MIDStruct.getTableName,TheoreticalIR.getTableName,ExpIRAndState.getTableName,StructureUniverse.getTableName) else args).toList
 			for(i<-arglist){
 				i match {
-					case MIDStruct.getTableName => MIDStruct.getOrCreate
-					case TheoreticalIR.getTableName => TheoreticalIR.getOrCreate
-					case ExpIRAndState.getTableName => ExpIRAndState.getOrCreate
-					case StructureUniverse.getTableName => StructureUniverse.getOrCreate
+					case MIDStruct.getTableName => { MIDStruct.getOrCreate; MIDStruct.stats }
+					case TheoreticalIR.getTableName => { TheoreticalIR.getOrCreate; TheoreticalIR.stats }
+					case ExpIRAndState.getTableName => { ExpIRAndState.getOrCreate; ExpIRAndState.stats }
+					case StructureUniverse.getTableName => { StructureUniverse.getOrCreate; StructureUniverse.stats }
 				}
 			}
 		}

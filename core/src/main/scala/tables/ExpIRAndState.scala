@@ -148,6 +148,10 @@ package irms {
             // output
             expir.show()
             expir.write.parquet(path)
+        }
+
+        def stats() = {
+            val expir = getOrCreate
             val show_states = expir.groupBy(expir("state")).count().sort($"count".desc)
             show_states.show()
         }

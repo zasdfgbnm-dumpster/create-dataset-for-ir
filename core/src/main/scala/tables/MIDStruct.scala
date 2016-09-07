@@ -27,7 +27,7 @@ package irms {
             val smiles = structs_not_validated.repartition(32).map(j=>j.smiles).rdd
                          .pipe(Env.pycmd + " " + Env.bin + "/verify.py").toDS
             val structs = structs_not_validated.joinWith(smiles,structs_not_validated("smiles")===smiles("value")).map(_._1)
-            println("number of bad structures removed: "+(structs_not_validated.count()-structs.count()))
+            //println("number of bad structures removed: "+(structs_not_validated.count()-structs.count()))
 
             // process duplicates
             val ldup = Env.spark.read.text(Env.raw + "/duplicates.log").as[String]
@@ -46,7 +46,7 @@ package irms {
 
             // write to file
             total_struct.write.parquet(path)
-            total_struct.show()
         }
+        def stats() = getOrCreate.show()
     }
 }

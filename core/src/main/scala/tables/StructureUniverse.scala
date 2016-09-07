@@ -35,14 +35,22 @@ package irms {
                     smiles_nist
 
             println("functional groups: "+FunGrps.func_grps.reduce(_+" "+_))
-            println("number of structures: "+smiles.count())
 
             // apply transformations to smiles to generate parquet
             val smstr = smiles.rdd.pipe(Env.pycmd + " " + Env.bin+"/calc-mass-fg.py").toDS()
             val universe = smstr.map(parse)
 
-            universe.show()
             universe.write.parquet(path)
+        }
+
+        def stats() = {
+            val universe = getOrCreate
+            val masses = universe.groupBy("mass").count().sort($"count".desc)
+            val massfgs = universe.groupBy("mass","fg").count().sort($"count".desc)
+            universe.show()
+            masses.show()
+            massfgs.show()
+            massfgs.write.parquet("demos/massfgs")
         }
 
     }

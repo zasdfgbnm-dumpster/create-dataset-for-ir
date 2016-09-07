@@ -29,6 +29,8 @@ package irms {
 			}
 			ds.get
 		}
+
+		def stats()
 	}
 
 }

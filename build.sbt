@@ -21,6 +21,7 @@ lazy val macro = (project in file("macro")).
 		libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _),
 		libraryDependencies ++= ( if(scalaVersion.value.startsWith("2.10")) List("org.scalamacros" %% "quasiquotes" % paradiseVersion) else Nil )
 	)
+
 lazy val core = (project in file("core")).
 	dependsOn(macro).
 	settings(commonSettings: _*).
@@ -38,12 +39,14 @@ lazy val core = (project in file("core")).
 			s"spark-submit $fullname "+args.mkString(" ") !;
 		}
 	)
+
 lazy val root = (project in file(".")).
 	aggregate(macro, core).
 	dependsOn(core).
 	settings(commonSettings: _*).
 	settings(
 		cleanFiles <+= baseDirectory { base => base / "spark-warehouse" },
+		cleanFiles <+= baseDirectory { base => base / "demos/massfgs" },
 		run <<= run in Compile in core
 	)
 
