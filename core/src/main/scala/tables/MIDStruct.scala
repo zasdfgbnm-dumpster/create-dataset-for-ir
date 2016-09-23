@@ -5,7 +5,7 @@ package irms {
     import Env.spark.implicits._
 
     case class MIDStruct(mid:String,smiles:String)
-    object MIDStruct extends Table[MIDStruct] {
+    object MIDStruct extends ProductTable[MIDStruct] {
 
         private case class DupOf(mid:String,dupof:String)
 
@@ -47,6 +47,6 @@ package irms {
             // write to file
             total_struct.write.parquet(path)
         }
-        def stats() = getOrCreate.show()
+        def stats() = TableManager.getOrCreate(this).show()
     }
 }

@@ -10,7 +10,7 @@ package irms {
     import Env.spark.implicits._
 
     case class TheoreticalIR(smiles:String, method:String, freqs:Array[(Double,Double)])
-    object TheoreticalIR extends Table[TheoreticalIR] {
+    object TheoreticalIR extends ProductTable[TheoreticalIR] {
 
         private val sdf = Env.raw + "/sdf_files"
 
@@ -42,10 +42,10 @@ package irms {
             // read sdf files
             val files = Env.spark.createDataset( (s"ls $sdf" !!).split(raw"\s+") )
             val data = files.map(read).filter(_.isDefined).map(_.get)
-            data.groupBy(data("freqsformat")).count().sort($"count".desc).show()
+            //data.groupBy(data("freqsformat")).count().sort($"count".desc).show()
 
             // replace mid with structure
-            val mid_structure = MIDStruct.getOrCreate
+            val mid_structure = TableManager.getOrCreate(MIDStruct)
             val join = data.joinWith(mid_structure,data("mid")===mid_structure("mid"))
             val table = join.map(j => new TheoreticalIR(smiles=j._2.smiles,method=j._1.method,freqs=j._1.freqs))
 
@@ -54,7 +54,7 @@ package irms {
         }
 
         def stats() = {
-            val table = getOrCreate
+            val table = TableManager.getOrCreate(this)
             table.show()
             table.groupBy(table("method")).count().sort($"count".desc).show()
         }

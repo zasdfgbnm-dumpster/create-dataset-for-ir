@@ -1,4 +1,6 @@
 import org.apache.spark.sql._
+import sys.process._
+import scala.language.postfixOps
 
 package irms {
 
@@ -10,9 +12,9 @@ package irms {
         def apply(a:Array[Boolean]):FunctionalGroups = FunctionalGroups
     }
     case class StructureUniverse(smiles:String,mass:Double, fg:FunctionalGroups)
-    object StructureUniverse extends Table[StructureUniverse] {
+    object StructureUniverse extends ProductTable[StructureUniverse] {
 
-        private val gdb = Env.raw + "/gdb13"
+        private val universe_dir = Env.raw + "/universe"
 
         private def parse(str:String):StructureUniverse = {
             val (l,fgs) = str.split(raw"\s+",2+FunGrps.func_grps.length).splitAt(2)
@@ -24,17 +26,14 @@ package irms {
             import Env.spark.implicits._
 
             // get list of smiles
-            val mid_structure = MIDStruct.getOrCreate
+            val mid_structure = TableManager.getOrCreate(MIDStruct)
             val smiles_nist = mid_structure.map(_.smiles).distinct()
-            val smiles =
-                if(Env.ishpg){
-                    val filenames = Range(1,14).map(j=>gdb+s"/$j.smi")
-                    val smiles_gdb = filenames.map(Env.spark.read.text(_).as[String]).reduce(_.union(_))
-                    smiles_nist.union(smiles_gdb).repartition(2000).distinct()
-                }else
-                    smiles_nist
-
-            println("functional groups: "+FunGrps.func_grps.reduce(_+" "+_))
+            val filenames = ("ls "+universe_dir !!).trim
+            val smiles = if(filenames.length>0) {
+                val fn = filenames.split(raw"\n").map(universe_dir+"/"+_)
+                val smiles_universe = fn.map(Env.spark.read.text(_).as[String]).reduce(_.union(_))
+                smiles_nist.union(smiles_universe).repartition(2000).distinct()
+            } else smiles_nist
 
             // apply transformations to smiles to generate parquet
             val smstr = smiles.rdd.pipe(Env.pycmd + " " + Env.bin+"/calc-mass-fg.py").toDS()
@@ -44,13 +43,20 @@ package irms {
         }
 
         def stats() = {
-            val universe = getOrCreate
+            println("number of functional groups: "+FunGrps.func_grps.reduce(_+" "+_))
+            val universe = TableManager.getOrCreate(this)
             val masses = universe.groupBy("mass").count().sort($"count".desc)
             val massfgs = universe.groupBy("mass","fg").count().sort($"count".desc)
+            val fgs = universe.groupBy("fg").count().sort($"count".desc)
             universe.show()
             masses.show()
             massfgs.show()
-            massfgs.write.parquet("demos/massfgs")
+            fgs.show()
+            if(Env.ishpg) {
+                masses.write.parquet("demos/mass")
+                massfgs.write.parquet("demos/massfgs")
+                fgs.write.parquet("demos/fgs")
+            }
         }
 
     }

@@ -9,7 +9,7 @@ package irms {
 		val ishpg = Files.exists(Paths.get("/ufrc/roitberg/qasdfgtyuiop"))
 
 		// paths
-		val workspace = if(ishpg) "/ufrc/roitberg/qasdfgtyuiop/" else "/home/gaoxiang/MEGA"
+		val workspace = if(ishpg) "/ufrc/roitberg/qasdfgtyuiop" else "/home/gaoxiang/MEGA"
 		val raw = workspace + "/raw"
 		val tables = workspace + "/tables"
 		val bin = workspace + "/bin"
