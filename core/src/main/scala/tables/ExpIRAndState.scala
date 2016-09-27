@@ -141,19 +141,14 @@ package irms {
             val expir_raw = filelist.map(readExpIRAndState).filter(_.isDefined).map(_.get)
 
             // remove data of bad structures(structures not in mid_structure)
-            val mid_structure = TableManager.getOrCreate(this)
+            val mid_structure = TableManager.getOrCreate(MIDStruct)
             val join = expir_raw.joinWith(mid_structure,expir_raw("mid")===mid_structure("mid"))
             val expir = join.map(_._1)
 
             // output
-            expir.write.parquet(path)
-        }
-
-        def stats() = {
-            val expir = TableManager.getOrCreate(this)
             expir.show()
-            val show_states = expir.groupBy(expir("state")).count().sort($"count".desc)
-            show_states.show()
+            expir.groupBy(expir("state")).count().sort($"count".desc).show()
+            expir.write.parquet(path)
         }
 
     }

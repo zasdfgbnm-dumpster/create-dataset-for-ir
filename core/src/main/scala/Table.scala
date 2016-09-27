@@ -13,8 +13,6 @@ package irms {
 
 		def create(path:String):Unit
 
-		def stats()
-
 	}
 	abstract class ProductTable[T] extends Table {
 

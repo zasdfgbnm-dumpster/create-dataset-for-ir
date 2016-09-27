@@ -45,8 +45,8 @@ package irms {
             val total_struct = dup_struct.union(structs)
 
             // write to file
+            total_struct.show()
             total_struct.write.parquet(path)
         }
-        def stats() = TableManager.getOrCreate(this).show()
     }
 }

@@ -39,24 +39,8 @@ package irms {
             val smstr = smiles.rdd.pipe(Env.pycmd + " " + Env.bin+"/calc-mass-fg.py").toDS()
             val universe = smstr.map(parse)
 
-            universe.write.parquet(path)
-        }
-
-        def stats() = {
-            println("number of functional groups: "+FunGrps.func_grps.reduce(_+" "+_))
-            val universe = TableManager.getOrCreate(this)
-            val masses = universe.groupBy("mass").count().sort($"count".desc)
-            val massfgs = universe.groupBy("mass","fg").count().sort($"count".desc)
-            val fgs = universe.groupBy("fg").count().sort($"count".desc)
             universe.show()
-            masses.show()
-            massfgs.show()
-            fgs.show()
-            if(Env.ishpg) {
-                masses.write.parquet("demos/mass")
-                massfgs.write.parquet("demos/massfgs")
-                fgs.write.parquet("demos/fgs")
-            }
+            universe.write.parquet(path)
         }
 
     }
