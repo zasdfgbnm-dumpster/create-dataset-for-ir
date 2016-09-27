@@ -83,5 +83,5 @@ hpgator := {
 lazy val json = taskKey[Unit]("convert tables to json")
 json := {
 	val build_tables = (assembly in assembly).value
-	"python" #< new File("tools/json.py") !
+	"python" #< new File("src/main/python/json.py") !
 }
