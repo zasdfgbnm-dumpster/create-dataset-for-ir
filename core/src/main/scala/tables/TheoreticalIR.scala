@@ -50,13 +50,9 @@ package irms {
             val table = join.map(j => new TheoreticalIR(smiles=j._2.smiles,method=j._1.method,freqs=j._1.freqs))
 
             // outputs
-            table.write.parquet(path)
-        }
-
-        def stats() = {
-            val table = TableManager.getOrCreate(this)
             table.show()
             table.groupBy(table("method")).count().sort($"count".desc).show()
+            table.write.parquet(path)
         }
     }
 }

@@ -46,7 +46,6 @@ lazy val root = (project in file(".")).
 	settings(commonSettings: _*).
 	settings(
 		cleanFiles <+= baseDirectory { base => base / "spark-warehouse" },
-		cleanFiles <+= baseDirectory { base => base / "demos/massfgs" },
 		run <<= run in Compile in core
 	)
 
