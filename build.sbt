@@ -1,6 +1,6 @@
 import sbt.complete._
 import sbt.complete.DefaultParsers._
-
+import java.io.File
 
 val scalaversion = "2.11.8"
 val paradiseVersion = "2.1.0"
@@ -86,5 +86,5 @@ hpgator := {
 lazy val json = taskKey[Unit]("convert tables to json")
 json := {
 	val build_tables = (run in Compile in core).toTask("").value
-	"python" #< "tools/json.py" !;
+	"python" #< new File("tools/json.py") !
 }
