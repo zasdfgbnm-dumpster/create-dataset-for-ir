@@ -75,9 +75,17 @@ rm := {
 // 	(run in Compile).evaluated
 // }
 
+// copy files to hipergator
 lazy val hpgator = taskKey[Unit]("copy files to hpgator")
 hpgator := {
 	val jar = (Keys.`package` in Compile in core).value.getAbsolutePath()
 	val build_tables = (run in Compile in core).toTask(" MIDStruct ExpIRAndState TheoreticalIR").value
 	"./core/src/main/sh/hpgator.sh " + jar !;
+}
+
+// convert tables to json
+lazy val json = taskKey[Unit]("convert tables to json")
+json := {
+	val build_tables = (run in Compile in core).toTask("").value
+	"python" #< "tools/json.py" !;
 }
