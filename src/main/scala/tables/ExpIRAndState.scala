@@ -9,10 +9,8 @@ import org.apache.spark.sql._
 
 package irms {
 
-    import Env.spark.implicits._
-
     case class ExpIRAndState(mid:String, index:Int, vec:Array[Double], state:String, state_info:String)
-    object ExpIRAndState extends ProductTable[ExpIRAndState] {
+    object ExpIRAndState extends Table {
 
         private class BadJDXException(info:String) extends Throwable {}
 
@@ -134,11 +132,12 @@ package irms {
         }
 
         def create(path:String):Unit = {
-            import Env.spark.implicits._
+            val spark = Env.spark
+            import spark.implicits._
 
             // process jdx files
             val filelist = Env.spark.createDataset( ("ls "+inputdir !!).split(raw"\n") )
-            val expir_raw = filelist.map(readExpIRAndState).filter(_.isDefined).map(_.get)
+            val expir_raw = filelist.rdd.map(readExpIRAndState).filter(_.isDefined).map(_.get).toDS
 
             // remove data of bad structures(structures not in mid_structure)
             val mid_structure = TableManager.getOrCreate(MIDStruct)

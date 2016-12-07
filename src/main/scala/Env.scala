@@ -20,7 +20,7 @@ package irms {
 		val pycmd = if(ishpg) bin+"/anaconda3/envs/my-rdkit-env/bin/python" else "python"
 
 		// spark session
-		val spark = SparkSession.builder.getOrCreate()
+		def spark = SparkSession.builder.getOrCreate()
 	}
 
 }

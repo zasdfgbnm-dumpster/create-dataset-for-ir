@@ -4,7 +4,6 @@ import scala.language.postfixOps
 
 package irms {
 
-    import Env.spark.implicits._
 
     @fgargs case class FunctionalGroups()
     object FunctionalGroupsCvt {
@@ -12,18 +11,18 @@ package irms {
         def apply(a:Array[Boolean]):FunctionalGroups = FunctionalGroups
     }
     case class StructureUniverse(smiles:String,mass:Double, fg:FunctionalGroups, source:Array[String])
-    object StructureUniverse extends ProductTable[StructureUniverse] {
-
+    object StructureUniverse extends Table {
         private val universe_dir = Env.raw + "/universe"
 
         private def parse(pyoutput:String,source:String):StructureUniverse = {
             val (l,fgs) = pyoutput.split(raw"\s+",2+FunGrps.func_grps.length).splitAt(2)
             val fgsboolean = fgs.map(_.toBoolean)
-            StructureUniverse(smiles=l(0),mass=l(1).toDouble,fg=FunctionalGroupsCvt(fgsboolean),source=Array(source))
+            new StructureUniverse(smiles=l(0),mass=l(1).toDouble,fg=FunctionalGroupsCvt(fgsboolean),source=Array(source))
         }
 
         def create(path:String):Unit = {
-            import Env.spark.implicits._
+            val spark = Env.spark
+            import spark.implicits._
 
             def smiles_to_table(smiles:Dataset[String],source:String):Dataset[StructureUniverse] = {
                 // apply transformations to smiles to generate parquet
@@ -31,7 +30,7 @@ package irms {
                 smstr.map(parse(_,source))
             }
             // create table for smiles from NIST
-            val mid_structure = TableManager.getOrCreate(MIDStruct)
+            val mid_structure = TableManager.getOrCreate(MIDStruct).as[MIDStruct]
             val nist = smiles_to_table(mid_structure.map(_.smiles).distinct(),"nist")
 
             // create table for smiles from external source
@@ -50,7 +49,7 @@ package irms {
             def merge_table_elem(a:StructureUniverse,b:StructureUniverse):StructureUniverse = {
                 StructureUniverse(smiles=a.smiles,mass=a.mass,fg=a.fg,source=(a.source++b.source).sorted)
             }
-            val universe = universe_dup.map(j=>(j.smiles,j)).rdd.reduceByKey(merge_table_elem).map(_._2).toDS
+            val universe = universe_dup.repartition(2000).map(j=>(j.smiles,j)).rdd.reduceByKey(merge_table_elem).map(_._2).toDS
 
             universe.show()
             universe.groupBy("source").count().show()

@@ -14,26 +14,21 @@ package irms {
 		def create(path:String):Unit
 
 	}
-	abstract class ProductTable[T] extends Table {
-
-		type rowType = T
-
-	}
 
 	object TableManager {
 
 		private val tables = Map[String,AnyRef]()
 
-		def getOrCreate[T:Encoder](obj:ProductTable[T]):Dataset[T] = {
+		def getOrCreate(obj:Table):DataFrame = {
 			val name = obj.getTableName
 			if(!tables.contains(name)){
 				val path = Env.tables+"/" + name
 				if(!Files.exists(Paths.get(path))) {
 					obj.create(path)
 				}
-				Env.spark.read.parquet(path).as[T]
+				Env.spark.read.parquet(path)
 			} else {
-				tables(name).asInstanceOf[Dataset[T]]
+				tables(name).asInstanceOf[DataFrame]
 			}
 		}
 	}

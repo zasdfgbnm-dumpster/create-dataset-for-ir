@@ -2,16 +2,15 @@ import org.apache.spark.sql._
 
 package irms {
 
-    import Env.spark.implicits._
-
     case class MIDStruct(mid:String,smiles:String)
-    object MIDStruct extends ProductTable[MIDStruct] {
+    object MIDStruct extends Table {
 
         private case class DupOf(mid:String,dupof:String)
 
         def create(path:String):Unit = {
-            import Env.spark.implicits._
-
+            val spark = Env.spark
+            import spark.implicits._
+            
             // process structures
             val lunique = Env.spark.read.text(Env.raw + "/all.unique.smi").as[String]
             //val lsalts  = Env.spark.read.text(Env.raw + "/all.salts.smi").as[String]
