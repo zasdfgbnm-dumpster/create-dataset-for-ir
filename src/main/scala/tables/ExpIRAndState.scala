@@ -124,7 +124,8 @@ package irms {
             val index = ii(1).toInt
             try {
                 val (vec,state,state_info) = jdx2vec(inputdir+filename)
-                Some(new ExpIRAndState(mid=mid,index=index,vec=vec,state=state,state_info=state_info))
+                val r = new ExpIRAndState(mid=mid,index=index,vec=vec,state=state,state_info=state_info)
+                Some(r)
             } catch {
                 case _ : NoSuchElementException  => None
                 case _ : BadJDXException => None
@@ -138,6 +139,7 @@ package irms {
             // process jdx files
             val filelist = Env.spark.createDataset( ("ls "+inputdir !!).split(raw"\n") )
             val expir_raw = filelist.rdd.map(readExpIRAndState).filter(_.isDefined).map(_.get).toDS
+            expir_raw.show()
 
             // remove data of bad structures(structures not in mid_structure)
             val mid_structure = TableManager.getOrCreate(MIDStruct)
