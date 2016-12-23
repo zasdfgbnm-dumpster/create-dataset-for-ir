@@ -5,7 +5,7 @@ import java.io.File
 val scalaversion = "2.11.8"
 val paradiseVersion = "2.1.0"
 
-val commonSettings = Defaults.defaultSettings ++ Seq (
+val commonSettings = Defaults.coreDefaultSettings ++ Seq (
 	scalaVersion := scalaversion,
 	scalacOptions ++= Seq("-Xlint","-feature","-deprecation"),
 	crossScalaVersions := Seq(scalaversion),
@@ -15,14 +15,14 @@ val commonSettings = Defaults.defaultSettings ++ Seq (
 )
 
 // projects
-lazy val macro = (project in file("macro")).
+lazy val macros = (project in file("macro")).
 	settings(commonSettings: _*).
 	settings (
-		libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _),
+		libraryDependencies += { (scalaVersion)("org.scala-lang" % "scala-reflect" % _).value },
 		libraryDependencies ++= ( if(scalaVersion.value.startsWith("2.10")) List("org.scalamacros" %% "quasiquotes" % paradiseVersion) else Nil )
 	)
 
-lazy val root = (project in file(".")).dependsOn(macro).settings(commonSettings: _*)
+lazy val root = (project in file(".")).dependsOn(macros).settings(commonSettings: _*)
 
 
 // project root
@@ -30,7 +30,7 @@ name := "CreateDataset"
 version := "0.0.1-SNAPSHOT"
 libraryDependencies += "org.apache.spark" %% "spark-core" % "2.0.0" % "provided"
 libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.0.0" % "provided"
-cleanFiles <+= baseDirectory { base => base / "spark-warehouse" }
+cleanFiles += { (baseDirectory { base => base / "spark-warehouse" }).value }
 mainClass in assembly := Some("irms.CreateTables")
 assemblyMergeStrategy in assembly := {
 	case "FunctionalGroups.txt" => MergeStrategy.deduplicate
@@ -53,7 +53,7 @@ run in Compile := {
 	s"spark-submit $fullname "+args.mkString(" ") !;
 }
 
-val parser:Parser[Seq[String]] = token( (Space~>literal("ExpIRAndState")) | (Space~>literal("MIDStruct")) | (Space~>literal("StructureUniverse")) | (Space~>literal("TheoreticalIR")) ).*
+val parser:Parser[Seq[String]] = token( (Space~>literal("DatasetUsage")) | (Space~>literal("ExpIRAndState")) | (Space~>literal("MIDStruct")) | (Space~>literal("StructureUniverse")) | (Space~>literal("TheoreticalIR")) ).*
 
 lazy val rm = inputKey[Unit]("remove a table")
 rm := {
