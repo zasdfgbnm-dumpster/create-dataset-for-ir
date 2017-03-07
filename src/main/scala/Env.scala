@@ -10,8 +10,11 @@ package irms {
 
 		// paths
 		val workspace = if(ishpg) "/ufrc/roitberg/qasdfgtyuiop" else "/home/gaoxiang/MEGA"
+		val large_workspace = "/mnt/data/gaoxiang"
 		val raw = workspace + "/raw"
+		val large_raw = large_workspace + "/raw"
 		val tables = workspace + "/tables"
+		val large_tables = large_workspace + "/tables"
 		val bin = workspace + "/bin"
 		val tmp = workspace + "/tmp"
 		val data = workspace + "/data"

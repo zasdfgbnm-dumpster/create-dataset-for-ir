@@ -13,22 +13,24 @@ package irms {
 
 		def create(path:String):Unit
 
+		val is_large = false;
+
 	}
 
 	object TableManager {
 
-		private val tables = Map[String,AnyRef]()
+		private val tables = Map[String,DataFrame]()
 
 		def getOrCreate(obj:Table):DataFrame = {
 			val name = obj.getTableName
 			if(!tables.contains(name)){
-				val path = Env.tables+"/" + name
+				val path = (if(obj.is_large) Env.large_tables else Env.tables) + "/" + name
 				if(!Files.exists(Paths.get(path))) {
 					obj.create(path)
 				}
 				Env.spark.read.parquet(path)
 			} else {
-				tables(name).asInstanceOf[DataFrame]
+				tables(name)
 			}
 		}
 	}

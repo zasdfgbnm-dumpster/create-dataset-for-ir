@@ -7,49 +7,50 @@ import scala.language.postfixOps
 
 package irms {
 
-    case class TheoreticalIR(smiles:String, method:String, freqs:Array[(Double,Double)])
-    object TheoreticalIR extends Table {
-        private val sdf = Env.raw + "/sdf_files"
+	case class TheoreticalIR(smiles:String, method:String, freqs:Array[(Double,Double)])
+	object TheoreticalIR extends Table {
 
-        private case class fn_m_freq(mid:String,method:String,freqsformat:String,freqs:Array[(Double,Double)])
+		private val sdf = Env.raw + "/sdf_files"
 
-        private def read(filename:String):Option[fn_m_freq] = {
-            val content = Source.fromFile(sdf+s"/$filename").mkString
-            val pattern = raw"\> \<([\w\.]+)\>"
-            var fieldcontents = content.split(pattern)
-            val fieldnames = pattern.r.findAllIn(content).toArray
-            val idxmethod = fieldnames.indexOf("> <METHOD>")
-            val idxirfreq = fieldnames.indexOf("> <IR.FREQUENCIES>")
-            if( idxmethod > 0 && idxirfreq > 0 ) {
-                val method = fieldcontents(idxmethod+1).trim
-                val irfreqstr = fieldcontents(idxirfreq+1).trim
-                def line2tuple(str:String) = {
-                    val a = str.trim.split(raw"\s+",2)
-                    (a(0).toDouble,a(1).toDouble)
-                }
-                val irfreqlines = irfreqstr.split(raw"\n+")
-                Some(new fn_m_freq(filename.split("\\.")(0),method,irfreqlines(0).trim,irfreqlines.tail.map(line2tuple)))
-            } else
-                None
-        }
+		private case class fn_m_freq(mid:String,method:String,freqsformat:String,freqs:Array[(Double,Double)])
 
-        def create(path:String):Unit = {
-            val spark = Env.spark
-            import spark.implicits._
-            // read sdf files
-            val files = Env.spark.createDataset( (s"ls $sdf" !!).split(raw"\s+") )
-            val data = files.map(read).filter(_.isDefined).map(_.get)
-            //data.groupBy(data("freqsformat")).count().sort($"count".desc).show()
+		private def read(filename:String):Option[fn_m_freq] = {
+			val content = Source.fromFile(sdf+s"/$filename").mkString
+			val pattern = raw"\> \<([\w\.]+)\>"
+			var fieldcontents = content.split(pattern)
+			val fieldnames = pattern.r.findAllIn(content).toArray
+			val idxmethod = fieldnames.indexOf("> <METHOD>")
+			val idxirfreq = fieldnames.indexOf("> <IR.FREQUENCIES>")
+			if( idxmethod > 0 && idxirfreq > 0 ) {
+				val method = fieldcontents(idxmethod+1).trim
+				val irfreqstr = fieldcontents(idxirfreq+1).trim
+				def line2tuple(str:String) = {
+					val a = str.trim.split(raw"\s+",2)
+					(a(0).toDouble,a(1).toDouble)
+				}
+				val irfreqlines = irfreqstr.split(raw"\n+")
+				Some(new fn_m_freq(filename.split("\\.")(0),method,irfreqlines(0).trim,irfreqlines.tail.map(line2tuple)))
+			} else
+				None
+		}
 
-            // replace mid with structure
-            val mid_structure = TableManager.getOrCreate(MIDStruct).as[MIDStruct]
-            val join = data.joinWith(mid_structure,data("mid")===mid_structure("mid"))
-            val table = join.map(j => new TheoreticalIR(smiles=j._2.smiles,method=j._1.method,freqs=j._1.freqs))
+		def create(path:String):Unit = {
+			val spark = Env.spark
+			import spark.implicits._
+			// read sdf files
+			val files = Env.spark.createDataset( (s"ls $sdf" !!).split(raw"\s+") )
+			val data = files.map(read).filter(_.isDefined).map(_.get)
+			//data.groupBy(data("freqsformat")).count().sort($"count".desc).show()
 
-            // outputs
-            table.show()
-            table.groupBy(table("method")).count().sort($"count".desc).show()
-            table.write.parquet(path)
-        }
-    }
+			// replace mid with structure
+			val mid_structure = TableManager.getOrCreate(MIDStruct).as[MIDStruct]
+			val join = data.joinWith(mid_structure,data("mid")===mid_structure("mid"))
+			val table = join.map(j => new TheoreticalIR(smiles=j._2.smiles,method=j._1.method,freqs=j._1.freqs))
+
+			// outputs
+			table.show()
+			table.groupBy(table("method")).count().sort($"count".desc).show()
+			table.write.parquet(path)
+		}
+	}
 }

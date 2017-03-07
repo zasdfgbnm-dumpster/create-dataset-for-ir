@@ -10,7 +10,7 @@ package irms {
         def create(path:String):Unit = {
             val spark = Env.spark
             import spark.implicits._
-            
+
             // process structures
             val lunique = Env.spark.read.text(Env.raw + "/all.unique.smi").as[String]
             //val lsalts  = Env.spark.read.text(Env.raw + "/all.salts.smi").as[String]
