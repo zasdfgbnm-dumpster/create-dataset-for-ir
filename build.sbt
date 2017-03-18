@@ -27,14 +27,18 @@ lazy val root = (project in file(".")).dependsOn(macros).settings(commonSettings
 
 // project root
 name := "CreateDataset"
-version := "0.0.1-SNAPSHOT"
-libraryDependencies += "org.apache.spark" %% "spark-core" % "2.0.0" % "provided"
-libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.0.0" % "provided"
+version := "0.0.2-SNAPSHOT"
+libraryDependencies += "org.apache.spark" %% "spark-core" % "2.1.0" % "provided"
+libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.1.0" % "provided"
+libraryDependencies += "org.mongodb.scala" %% "mongo-scala-driver" % "1.2.1"
 cleanFiles += { (baseDirectory { base => base / "spark-warehouse" }).value }
 mainClass in assembly := Some("irms.CreateTables")
 assemblyMergeStrategy in assembly := {
 	case "FunctionalGroups.txt" => MergeStrategy.deduplicate
 	case PathList("irms", xs @ _*) => MergeStrategy.deduplicate
+	case PathList("org","mongodb", xs @ _*) => MergeStrategy.deduplicate
+	case PathList("org","bson", xs @ _*) => MergeStrategy.deduplicate
+	case PathList("com","mongodb", xs @ _*) => MergeStrategy.deduplicate
 	case x => MergeStrategy.discard
 }
 
