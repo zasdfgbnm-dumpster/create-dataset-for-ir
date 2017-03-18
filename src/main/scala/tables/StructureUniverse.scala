@@ -15,7 +15,7 @@ package irms {
 
 		override val is_large = true
 
-		private val universe_dir = Env.raw + "/universe"
+		private val universe_dir = Env.large_raw + "/universe"
 
 		private def parse(pyoutput:String,source:String):StructureUniverse = {
 			val (l,fgs) = pyoutput.split(raw"\s+",2+FunGrps.func_grps.length).splitAt(2)
