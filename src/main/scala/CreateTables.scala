@@ -27,17 +27,17 @@ package irms {
 
 		case class SmExpir(smiles:String,vec:Array[Double],state:String,state_info:String)
 
-		def main(args: Array[String]): Unit = {
+		def create_documents(args: Array[String]): Unit = {
 
 			// show all tables
 			val spark = Env.spark
 			import spark.implicits._
 
-			val du = TableManager.getOrCreate(DatasetUsage)//.as[DatasetUsage]
-			val midstruct =  TableManager.getOrCreate(MIDStruct)//.as[MIDStruct]
-			val thir = TableManager.getOrCreate(TheoreticalIR)//.as[TheoreticalIR]
-			val expir =  TableManager.getOrCreate(ExpIRAndState)//.as[ExpIRAndState]
-			val univ = TableManager.getOrCreate(StructureUniverse)//.as[StructureUniverse]
+			val du = TableManager.getOrCreate(DatasetUsage).distinct()//.as[DatasetUsage]
+			val midstruct =  TableManager.getOrCreate(MIDStruct).distinct()//.as[MIDStruct]
+			val thir = TableManager.getOrCreate(TheoreticalIR).distinct()//.as[TheoreticalIR]
+			val expir =  TableManager.getOrCreate(ExpIRAndState).distinct()//.as[ExpIRAndState]
+			val univ = TableManager.getOrCreate(StructureUniverse).repartition(2000).distinct()//.as[StructureUniverse]
 			// du.show()
 			// midstruct.show()
 			// thir.show()
@@ -74,18 +74,18 @@ package irms {
 			// convert expir to an rdd of Document arrays as shown above
 			val smexpir = expir.join(midstruct, expir("mid")===midstruct("mid")).select("smiles","vec","state","state_info").distinct().as[SmExpir]
 			def expir2doc(r:SmExpir):(String,Document) = (r.smiles,Document("expir"->List(Document("vec"->r.vec.toList,"state"->r.state,"state_info"->r.state_info))))
-			val smexpirkeydoc = smexpir.rdd.map(expir2doc).reduceByKey(_++_)
+			val smexpirkeydoc = smexpir.rdd.map(expir2doc).reduceByKey(_++_).distinct()
 
 			// convert thir to an rdd of Document arrays as shown above
 			def thir2doc(r:TheoreticalIR):(String,Document) = {
 				val freqs = r.freqs.map(j=>Document("freq"->j._1,"intensity"->j._2)).toList
 				(r.smiles,Document("thir"->List(Document("method"->r.method,"freqs"->freqs))))
 			}
-			val thirkeydoc = thir.as[TheoreticalIR].rdd.map(thir2doc).reduceByKey(_++_)
+			val thirkeydoc = thir.as[TheoreticalIR].rdd.map(thir2doc).reduceByKey(_++_).distinct()
 
 			// convert mid struct map to an rdd of Document arrays as shown above
 			def midlist2doc(a:List[String]):Document = Document("external_id"->Document("nist"->a))
-			val midstructkeydoc = midstruct.as[MIDStruct].rdd.map(r=>(r.smiles,List(r.mid))).reduceByKey(_++_).mapValues(midlist2doc)
+			val midstructkeydoc = midstruct.as[MIDStruct].rdd.map(r=>(r.smiles,List(r.mid))).reduceByKey(_++_).mapValues(midlist2doc).distinct()
 
 			// convert universe to an rdd of Document arrays as shown above
 			def universe2doc(r:StructureUniverse):(String,Document) = {
@@ -99,19 +99,22 @@ package irms {
 			val univkeydoc = univ.as[StructureUniverse].rdd.map(universe2doc _)
 
 			// merge thir, expir, external_id
-			val merged = smexpirkeydoc.union(thirkeydoc).union(midstructkeydoc).reduceByKey(_++_).union(univkeydoc).reduceByKey(_++_)
-
+			val merged = smexpirkeydoc.union(thirkeydoc).union(midstructkeydoc).reduceByKey(_++_).distinct().union(univkeydoc).repartition(2000).reduceByKey(_++_,2000).distinct(2000)
+			merged.map(j=>Document("_id"->j._1)++j._2).saveAsObjectFile("/mnt/data/gaoxiang/spark-mongodb/universe")
 			// export to MongoDB
-			def add_to_db(docs:Iterator[Document]) = {
-				val docseq = docs.toSeq
-				val mongoClient: MongoClient = MongoClient()
-				val database: MongoDatabase = mongoClient.getDatabase("irms")
-				val collection: MongoCollection[Document] = database.getCollection("universe")
-				println("begin inserting " + docseq.length + "data into db, wait patiently...")
-				wait_results(collection.insertMany(docseq))
-				println("done inserting " + docseq.length + "data into db.")
-			}
-			merged.map(j=>Document("_id"->j._1)++j._2).foreachPartition(add_to_db)
+			// def add_to_db(docs:Iterator[Document]) = {
+			// 	val docseq = docs.toSeq
+			// 	val mongoClient: MongoClient = MongoClient()
+			// 	val database: MongoDatabase = mongoClient.getDatabase("irms")
+			// 	val collection: MongoCollection[Document] = database.getCollection("universe")
+			// 	println("begin inserting " + docseq.length + "data into db, wait patiently...")
+			// 	wait_results(collection.insertMany(docseq))
+			// 	println("done inserting " + docseq.length + "data into db.")
+			// }
+			// merged.map(j=>Document("_id"->j._1)++j._2).foreachPartition(add_to_db)
+		}
+
+		def main(args: Array[String]): Unit = {
 		}
 
 	}
