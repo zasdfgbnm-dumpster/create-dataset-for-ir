@@ -2,6 +2,8 @@ import org.mongodb.scala._
 import java.util.concurrent.TimeUnit
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
+import org.apache.spark.SparkContext
+import org.apache.spark.SparkConf
 
 package irms {
 	object CreateTables {
@@ -101,20 +103,23 @@ package irms {
 			// merge thir, expir, external_id
 			val merged = smexpirkeydoc.union(thirkeydoc).union(midstructkeydoc).reduceByKey(_++_).distinct().union(univkeydoc).repartition(2000).reduceByKey(_++_,2000).distinct(2000)
 			merged.map(j=>Document("_id"->j._1)++j._2).saveAsObjectFile("/mnt/data/gaoxiang/spark-mongodb/universe")
-			// export to MongoDB
-			// def add_to_db(docs:Iterator[Document]) = {
-			// 	val docseq = docs.toSeq
-			// 	val mongoClient: MongoClient = MongoClient()
-			// 	val database: MongoDatabase = mongoClient.getDatabase("irms")
-			// 	val collection: MongoCollection[Document] = database.getCollection("universe")
-			// 	println("begin inserting " + docseq.length + "data into db, wait patiently...")
-			// 	wait_results(collection.insertMany(docseq))
-			// 	println("done inserting " + docseq.length + "data into db.")
-			// }
-			// merged.map(j=>Document("_id"->j._1)++j._2).foreachPartition(add_to_db)
 		}
 
 		def main(args: Array[String]): Unit = {
+			val conf = new SparkConf().setAppName("add to MongoDB")
+			val context = new SparkContext(conf)
+			// export to MongoDB
+			def add_to_db(docs:Iterator[Document]) = {
+				val docseq = docs.toSeq
+				val mongoClient: MongoClient = MongoClient()
+				val database: MongoDatabase = mongoClient.getDatabase("irms")
+				val collection: MongoCollection[Document] = database.getCollection("universe")
+				println("begin inserting " + docseq.length + "data into db, wait patiently...")
+				wait_results(collection.insertMany(docseq))
+				println("done inserting " + docseq.length + "data into db.")
+				mongoClient.close()
+			}
+			context.objectFile[Document]("/mnt/data/gaoxiang/spark-mongodb/universe").foreachPartition(add_to_db)
 		}
 
 	}
