@@ -4,6 +4,10 @@ import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkConf
+import com.mongodb.spark._
+import org.mongodb.scala.bson.collection.immutable
+import com.mongodb.spark.config._
+import com.mongodb.client.model.{InsertManyOptions=>JInsertManyOptions}
 
 package irms {
 	object CreateTables {
@@ -105,21 +109,74 @@ package irms {
 			merged.map(j=>Document("_id"->j._1)++j._2).saveAsObjectFile("/mnt/data/gaoxiang/spark-mongodb/universe")
 		}
 
-		def main(args: Array[String]): Unit = {
+		def add_to_db(docs:Iterator[Document]) = {
+			val docseq = docs.toSeq
+			val mongoClient: MongoClient = MongoClient()
+			val database: MongoDatabase = mongoClient.getDatabase("irms")
+			val collection: MongoCollection[Document] = database.getCollection("universe")
+			println("begin inserting " + docseq.length + "data into db, wait patiently...")
+			val opt:JInsertManyOptions = new JInsertManyOptions()
+			wait_results(collection.insertMany(docseq,opt.ordered(false)))
+			println("done inserting " + docseq.length + "data into db.")
+			mongoClient.close()
+		}
+
+		def add_to_db_ignore_duplicate(docs:Iterator[Document]) = {
+			val docseq = docs.toSeq
+			val mongoClient: MongoClient = MongoClient()
+			val database: MongoDatabase = mongoClient.getDatabase("irms")
+			val collection: MongoCollection[Document] = database.getCollection("universe")
+			println("begin inserting " + docseq.length + "data into db, wait patiently...")
+			val opt:JInsertManyOptions = new JInsertManyOptions()
+			try {
+				wait_results(collection.insertMany(docseq,opt.ordered(false)))
+			} catch {
+				case _:Throwable =>
+			}
+			println("done inserting " + docseq.length + "data into db.")
+			mongoClient.close()
+		}
+
+		def insert_to_mongodb(args: Array[String]): Unit = {
 			val conf = new SparkConf().setAppName("add to MongoDB")
 			val context = new SparkContext(conf)
 			// export to MongoDB
-			def add_to_db(docs:Iterator[Document]) = {
-				val docseq = docs.toSeq
-				val mongoClient: MongoClient = MongoClient()
-				val database: MongoDatabase = mongoClient.getDatabase("irms")
-				val collection: MongoCollection[Document] = database.getCollection("universe")
-				println("begin inserting " + docseq.length + "data into db, wait patiently...")
-				wait_results(collection.insertMany(docseq))
-				println("done inserting " + docseq.length + "data into db.")
-				mongoClient.close()
-			}
 			context.objectFile[Document]("/mnt/data/gaoxiang/spark-mongodb/universe").foreachPartition(add_to_db)
+		}
+
+		def compute_rest(args: Array[String]): Unit = {
+			val conf = new SparkConf().setAppName("compute rest")
+			val context = new SparkContext(conf)
+			def getkey(d:Document):(String,Document) = (d.get("_id").get.asString.getValue,d)
+			var rdd1 = context.textFile("/mnt/data/gaoxiang/spark-mongodb/allids.txt",10000).map((_,Document()))
+			val rdd2 = context.objectFile[Document]("/mnt/data/gaoxiang/spark-mongodb/universe").map(getkey _).subtractByKey(rdd1,10000).map(_._2)
+			rdd2.saveAsObjectFile("/mnt/data/gaoxiang/spark-mongodb/universe-rest")
+		}
+
+		def insert_rest(args: Array[String]): Unit = {
+			val conf = new SparkConf().setAppName("add to MongoDB")
+			val context = new SparkContext(conf)
+			// export to MongoDB
+			val rdd = context.objectFile[Document]("/mnt/data/gaoxiang/spark-mongodb/universe-rest")
+			rdd.foreachPartition(add_to_db_ignore_duplicate)
+		}
+
+		def count_rest(args: Array[String]): Unit = {
+			val conf = new SparkConf().setAppName("add to MongoDB")
+			val context = new SparkContext(conf)
+			val rdd = context.objectFile[Document]("/mnt/data/gaoxiang/spark-mongodb/universe-rest")
+			println(rdd.count())
+		}
+
+		def count_all(args: Array[String]): Unit = {
+			val conf = new SparkConf().setAppName("add to MongoDB")
+			val context = new SparkContext(conf)
+			val rdd = context.objectFile[Document]("/mnt/data/gaoxiang/spark-mongodb/universe")
+			println(rdd.count()) //975850887
+		}
+
+		def main(args: Array[String]): Unit = {
+			count_all(args)
 		}
 
 	}

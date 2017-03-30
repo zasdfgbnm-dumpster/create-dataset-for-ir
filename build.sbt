@@ -31,14 +31,15 @@ version := "0.0.2-SNAPSHOT"
 libraryDependencies += "org.apache.spark" %% "spark-core" % "2.1.0" % "provided"
 libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.1.0" % "provided"
 libraryDependencies += "org.mongodb.scala" %% "mongo-scala-driver" % "1.2.1"
+libraryDependencies += "org.mongodb.spark" %% "mongo-spark-connector" % "2.0.0"
 cleanFiles += { (baseDirectory { base => base / "spark-warehouse" }).value }
 mainClass in assembly := Some("irms.CreateTables")
 assemblyMergeStrategy in assembly := {
-	case "FunctionalGroups.txt" => MergeStrategy.deduplicate
-	case PathList("irms", xs @ _*) => MergeStrategy.deduplicate
-	case PathList("org","mongodb", xs @ _*) => MergeStrategy.deduplicate
-	case PathList("org","bson", xs @ _*) => MergeStrategy.deduplicate
-	case PathList("com","mongodb", xs @ _*) => MergeStrategy.deduplicate
+	case "FunctionalGroups.txt" => MergeStrategy.first
+	case PathList("irms", xs @ _*) => MergeStrategy.first
+	case PathList("org","mongodb", xs @ _*) => MergeStrategy.first
+	case PathList("org","bson", xs @ _*) => MergeStrategy.first
+	case PathList("com","mongodb", xs @ _*) => MergeStrategy.first
 	case x => MergeStrategy.discard
 }
 
