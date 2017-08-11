@@ -58,7 +58,7 @@ CBr	CBr
 CI	CI
 
 //others
-[$(C[OX2H1]);!$([CX3](=O)[OX2H1])]	alchohl //CH but not COOH, is this enough
+[$(C[OX2H1]);!$([CX3](=O)[OX2H1])]	alcohol //CH but not COOH, is this enough
 [$([CX2](=C)=C),$([CX3]=[CX3])]	alkene //Note:
 //In daylight, $([CX2](=C)=C) is Allenic Carbon and $([CX3]=[CX3]) is Vinylic Carbon
 //Is [Allenic Carbon,Vinylic Carbon] enough ??
